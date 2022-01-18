@@ -13,9 +13,7 @@ namespace ONumber {
 /* Prüft, ob Zahl gerade oder ungerade ist: */
 bool istGerade(long i);
 
-
-
-
+long flip(long l); /* l * -1 binär */
 
 } /* Ende Namespace ONumber */
 

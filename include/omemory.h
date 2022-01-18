@@ -11,11 +11,14 @@
 #include <set>
 #include <queue>
 #include <iostream>
+#include <fstream>
 #include <algorithm>
 #include <string>
 #include <sstream>
+#include <string_view>
 
 #include "oexception.h"
+#include "ofile.h"
 #include "debug.h"
 
 
@@ -31,29 +34,47 @@ namespace Memory {
 template <class T>
 class StackPointer { /* OHNE DELETE */
 private:
-	std::string name;
-	T* pointer = nullptr; /* Kümmert sich NICHT um die Zerstörung des Pointers!  */
+   std::string name;
+   T* pointer = nullptr; /* Kümmert sich NICHT um die Zerstörung des Pointers!  */
 
 public:
-	StackPointer(const std::string& pname, T* pt = nullptr) : name(pname), pointer(pt) {}
+   StackPointer(const std::string& pname, T* pt = nullptr) : name(pname), pointer(pt) {}
 
-	virtual ~StackPointer() = default;
+   virtual ~StackPointer() = default;
 
-	bool hasValidPointer() const { return pointer != nullptr; }
+   bool hasValidPointer() const
+   {
+      return pointer != nullptr;
+   }
 
-	std::string getPointerName() const { return name; }
+   std::string getPointerName() const
+   {
+      return name;
+   }
 
-	virtual void setPointer(T* p) { pointer = p; }
+   virtual void setPointer(T* p)
+   {
+      pointer = p;
+   }
 
-	virtual void deletePointer() { setPointer(nullptr); }
+   virtual void deletePointer()
+   {
+      setPointer(nullptr);
+   }
 
-	T* getPointer() const { return pointer; }
+   T* getPointer() const
+   {
+      return pointer;
+   }
 
-	/* Wirft NullPointerException: */
-	T* getValidPointer() const;
+   /* Wirft NullPointerException: */
+   T* getValidPointer() const;
 
-	/* Wirft NullPointerException: */
-	T& getReference() const { return  *(getValidPointer()); }
+   /* Wirft NullPointerException: */
+   T& getReference() const
+   {
+      return  *(getValidPointer());
+   }
 };
 
 
@@ -64,17 +85,20 @@ public:
  * Sind im Heap gespeichert und müssen zerstört werden */
 template <class T>
 class HeapPointer : public StackPointer<T> { /* MIT DELETE */
-	/*
-	 *       HeapPointer besorgt auch die Zerstörung des Pointers.
-	 * */
+   /*
+    *       HeapPointer besorgt auch die Zerstörung des Pointers.
+    * */
 public:
-	HeapPointer(const std::string& pname, T* pt = nullptr) : StackPointer<T>(pname, pt) {}
+   HeapPointer(const std::string& pname, T* pt = nullptr) : StackPointer<T>(pname, pt) {}
 
-	virtual ~HeapPointer() { deletePointer(); }
+   virtual ~HeapPointer()
+   {
+      deletePointer();
+   }
 
-	void deletePointer() override;
+   void deletePointer() override;
 
-	void setPointer(T* p) override;
+   void setPointer(T* p) override;
 };
 
 
@@ -85,39 +109,14 @@ public:
 
 /* From muß polymorph sein, also einen virtuellen Destruktor besitzen! */
 template<class From, class To>
-static To* dynCast(From* v) {
-	if (v == nullptr) return nullptr;
-	To* ret = dynamic_cast<To*>(v);
-	if (ret == nullptr) throw OException::BadCast(__PRETTY_FUNCTION__, "dynamic_cast mißlungen.");
-	return ret;
+static To* dynCast(From* v)
+{
+   if (v == nullptr) return nullptr;
+   To* ret = dynamic_cast<To*>(v);
+   if (ret == nullptr) throw OException::BadCast(__PRETTY_FUNCTION__, "dynamic_cast mißlungen.");
+   return ret;
 }
 
-
-
-
-template <class T>
-void HeapPointer<T>::deletePointer() {
-	delete StackPointer<T>::getPointer();
-	StackPointer<T>::setPointer(nullptr);
-}
-
-
-template <class T>
-void HeapPointer<T>::setPointer(T* p) {
-	delete StackPointer<T>::getPointer();
-	StackPointer<T>::setPointer(p);
-}
-
-
-template <class T>
-T* StackPointer<T>::getValidPointer() const {
-	if (pointer == nullptr) {
-		std::stringstream buf;
-		buf << __PRETTY_FUNCTION__ << ": Zeiger für " << getPointerName() << " nicht definiert.";
-		throw OException::NullPointerException(buf.str());
-	}
-	return pointer;
-}
 
 
 
@@ -129,117 +128,75 @@ T* StackPointer<T>::getValidPointer() const {
 
 template <class T>
 class PointerPool final : private std::set<T*> {
-	//
-	// Die Klasse T muß die Methode resetValues()
-	// implementiert haben, bei der alle Variablen auf
-	// den init-Status zurückgesetzt werden.
-	//
-	typename std::allocator<T*>::pointer allocPointer = nullptr;
-	size_t allocatedSize = 0;
+   //
+   // Die Klasse T muß die Methode resetValues()
+   // implementiert haben, bei der alle Variablen auf
+   // den init-Status zurückgesetzt werden.
+   //
+   typename std::allocator<T*>::pointer allocPointer = nullptr;
+   size_t allocatedSize = 0;
 
-	static void delPt(T* ptr) { delete ptr; }
+   static void delPt(T* ptr)
+   {
+      delete ptr;
+   }
 
-	void deleteAll() {
-		for_each (this->cbegin(), this->cend(), *(delPt));
-	}
+   void deleteAll()
+   {
+      for_each (this->cbegin(), this->cend(), *(delPt));
+   }
 
-	std::queue<T*> ppool;
+   std::queue<T*> ppool;
 
-	int reuseCalls = 0;
-	int reuseFails = 0;
+   int reuseCalls = 0;
+   int reuseFails = 0;
 
 public:
-	PointerPool(size_t alloc = 0);
+   PointerPool(size_t alloc = 0);
 
-	~PointerPool();
+   ~PointerPool();
 
-	void put(T* ptr);
+   void put(T* ptr);
 
-	void reset();
+   void reset();
 
-	// Gebrauchte Objekte werden mit zurückgesetzten Variablen geliefert,
-	// sodaß sie mit bloßem init() initialisiert werden können.
-	T* get();
+   // Gebrauchte Objekte werden mit zurückgesetzten Variablen geliefert,
+   // sodaß sie mit bloßem init() initialisiert werden können.
+   T* get();
 
-	void debugInfo(std::ostream& = std::cout);
+   void debugInfo(std::ostream& = std::cout);
+};
+
+
+
+// --------------/  Objektspeicher:  /--------------------------
+
+template <class T>
+class Objektspeicher {
+   /* Speichert Objekte in Binärdateien...               */
+   /* T darf keine Zeiger enthalten, weil dann nur diese */
+   /* und nicht auch der Inhalt gespeichert werden! Bei  */
+   /* recall() zeigen die Zeiger dann ins Leere. :-(     */
+private:
+   const char* filename;
+
+public:
+   Objektspeicher(const char* fn) : filename{fn} {}
+
+   /* Wirft OFile::CannotOpen */
+   void store(const T& obj) const;
+
+   /* Wirft OFile::CannotOpen */
+   T recall() const;
 };
 
 
 
 
 
-
-
 // --------/  Methoden:  /--------------------------
-
-
-template <class T>
-PointerPool<T>::PointerPool(size_t alloc) {
-	if (alloc) {
-		allocPointer = this->get_allocator().allocate(alloc);
-		allocatedSize = alloc;
-	}
-}
-
-
-template <class T>
-PointerPool<T>::~PointerPool() {
-	this->reset();
-	this->get_allocator().deallocate(allocPointer, allocatedSize);
-}
-
-
-
-template<typename T>
-T* PointerPool<T>::get() {
-	reuseCalls++;
-	T* ret;
-	if (ppool.empty()) {
-		reuseFails++;
-		ret = new T;
-		this->insert(ret); // Zum Zerstören vormerken...
-	} else {
-		ret = ppool.front();
-		ppool.pop();
-		ret->resetValues();
-	}
-	return ret;
-}
-
-
-template <class T>
-void PointerPool<T>::put(T* ptr) {
-	if (! ptr) return;
-	ppool.push(ptr);
-}
-
-
-template <class T>
-void PointerPool<T>::reset() {
-	ppool = std::queue<T*>();
-	this->deleteAll();
-	this->clear();
-}
-
-
-template<class T>
-void PointerPool<T>::debugInfo(std::ostream& os) {
-	int besetzt = this->size() - ppool.size();
-	os << "# reuse() " << reuseCalls << " mal aufgerufen, dabei " << reuseFails << " Nullzeiger zurückgegeben.\n# "
-		<< this->size() << " Zeiger im Pool gespeichert, davon noch " << besetzt << " besetzt." << std::endl;
-}
-
-
-
-
-
-
-
-
-
-
-
-
+/* werden inkludiert durch: */
+#include "omemory.tpp"
 
 
 }; // Ende Namespace Memory

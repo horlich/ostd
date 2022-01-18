@@ -272,7 +272,7 @@ void SQLDay::setValues(const std::string& sql) {
 	int y = stoi(sql.substr(0,4));
 	int m = stoi(sql.substr(5,2));
 	int d = stoi(sql.substr(8,2));
-	Day::setValues(d,m,y);
+	setValues(d,m,y);
 }
 
 

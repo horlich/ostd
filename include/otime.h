@@ -58,7 +58,7 @@ class Month {
 
 public:
 	// validiert nicht!
-	Month(size_t zahl = 0, const Year& j = Year());
+	Month(size_t zahl = 0, const Year& j = Year(0));
 
 	Month(const OTime* ptr);
 
@@ -90,7 +90,7 @@ public:
 class Day {
 private:
 	Month monat;
-	int tz = 0;
+	int tz{0};
 
 	inline void init(const Zeit::OTime*);
 
@@ -145,7 +145,8 @@ Day today();
 
 class SQLDay : public Day {
 public:
-	SQLDay() : Day(0,0,0) {} // Erzeugt einen ungültigen Wert!
+//	SQLDay() : Day(0,0,0) {} // Erzeugt einen ungültigen Wert!
+   SQLDay() = default;
 
 	/* Argument muß strikt im SQL-Format
 	 * sein, sonst verhält sich das Programm
@@ -154,6 +155,7 @@ public:
 
 	virtual ~SQLDay() = default;
 
+	using Day::setValues;
 	virtual void setValues(const std::string& sql);
 };
 

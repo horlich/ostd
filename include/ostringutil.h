@@ -16,6 +16,7 @@
 #include <cwchar>
 #include <locale>
 #include <codecvt>
+#include <cstring>
 
 #include "oexception.h"
 #include "ocharutil.h"
@@ -32,10 +33,10 @@ namespace StringUtil {
 
 class OStringUtilException : public OException::Fehler {
 public:
-	OStringUtilException(const std::string& message) :
-		Fehler(message) {}
+   OStringUtilException(const std::string& message) :
+      Fehler(message) {}
 
-	virtual ~OStringUtilException() = default;
+   virtual ~OStringUtilException() = default;
 };
 
 
@@ -43,10 +44,10 @@ public:
 
 class KeinUTF8 : public OStringUtilException {
 public:
-	KeinUTF8(const std::string& message) :
-		OStringUtilException(message) {}
+   KeinUTF8(const std::string& message) :
+      OStringUtilException(message) {}
 
-	virtual ~KeinUTF8() = default;
+   virtual ~KeinUTF8() = default;
 };
 
 
@@ -92,9 +93,9 @@ int parseArgs(const std::string& str, std::vector<std::string> *vec);
  * */
 
 extern std::wstring_convert<std::codecvt_utf8<char32_t>,char32_t> U32_CONVERTER;
-	// Usage:
-	// U32_CONVERTER.to_bytes(u32string)
-	// U32_CONVERTER.from_bytes(std::string);
+// Usage:
+// U32_CONVERTER.to_bytes(u32string)
+// U32_CONVERTER.from_bytes(std::string);
 
 
 
@@ -129,19 +130,27 @@ int u8Strlen(const std::string& str);
 class ArgParser : protected StrVec {
 private:
 public:
-	int parse(std::string& str) {
-		clear();
-		StringUtil::parseArgs(str, this);
-		return size();
-	}
+   int parse(std::string& str)
+   {
+      clear();
+      StringUtil::parseArgs(str, this);
+      return size();
+   }
 
-	std::string getArg(int i) const {
-		return at(i);
-	}
+   std::string getArg(int i) const
+   {
+      return at(i);
+   }
 
-	inline int argc() const { return size(); }
+   inline int argc() const
+   {
+      return size();
+   }
 
-	inline bool empty() const { return StrVec::empty(); }
+   inline bool empty() const
+   {
+      return StrVec::empty();
+   }
 };
 
 
@@ -152,13 +161,13 @@ public:
 
 class U32String : public std::vector<CharUtil::U32Char> {
 public:
-	virtual ~U32String() = default;
+   virtual ~U32String() = default;
 
-	virtual void resetValues();
+   virtual void resetValues();
 
-	bool containsGraph() const;
+   bool containsGraph() const;
 
-	std::string str() const;
+   std::string str() const;
 };
 
 std::ostream& operator<<(std::ostream&, const U32String&);
@@ -172,80 +181,109 @@ std::istream& operator>>(std::istream&, U32String&);
 
 class U32Token : public U32String {
 public:
-	enum class Ending { NULLSTR, SOFT_HYPHEN, SEPARATOR, SPACE, NEWLINE };
+   enum class Ending { NULLSTR, SOFT_HYPHEN, SEPARATOR, SPACE, NEWLINE };
 
-	static std::string endingToString(Ending end) {
-		switch (end) {
-		case Ending::NULLSTR: return "NULLSTR";
-		case Ending::SOFT_HYPHEN: return "SOFT_HYPHEN";
-		case Ending::SEPARATOR: return "SEPARATOR";
-		case Ending::SPACE: return "SPACE";
-		case Ending::NEWLINE: return "NEWLINE";
-		default:;
-		}
-		return "FEHLER";
-	}
+   static std::string endingToString(Ending end)
+   {
+      switch (end) {
+      case Ending::NULLSTR:
+         return "NULLSTR";
+      case Ending::SOFT_HYPHEN:
+         return "SOFT_HYPHEN";
+      case Ending::SEPARATOR:
+         return "SEPARATOR";
+      case Ending::SPACE:
+         return "SPACE";
+      case Ending::NEWLINE:
+         return "NEWLINE";
+      default:
+         ;
+      }
+      return "FEHLER";
+   }
 
 private:
-	// afterLast ist NICHT Bestandteil des U8Token, sondern
-	// muß gegebenenfalls in ein neues U8Token eingelesen werden!
-	CharUtil::U32Char afterLast;
-	Ending endsWith;
-	static const std::string DEFAULT_TRENNER;
+   // afterLast ist NICHT Bestandteil des U8Token, sondern
+   // muß gegebenenfalls in ein neues U8Token eingelesen werden!
+   CharUtil::U32Char afterLast;
+   Ending endsWith;
+   static const std::string DEFAULT_TRENNER;
 
 public:
-	U32Token();
+   U32Token();
 
-	U32Token(std::istream&, const std::string& trenner = DEFAULT_TRENNER);
+   U32Token(std::istream&, const std::string& trenner = DEFAULT_TRENNER);
 
-	virtual ~U32Token() = default;
+   virtual ~U32Token() = default;
 
-	virtual void resetValues();
+   virtual void resetValues();
 
-	// Gegebenenfalls ist vorher resetValues() aufzurufen!
-	std::istream& init(std::istream&, const std::string& = DEFAULT_TRENNER);
+   // Gegebenenfalls ist vorher resetValues() aufzurufen!
+   std::istream& init(std::istream&, const std::string& = DEFAULT_TRENNER);
 
-	void setAfterLast(CharUtil::U32Char uc);
+   void setAfterLast(CharUtil::U32Char uc);
 
-	void setAfterLast(char c);
+   void setAfterLast(char c);
 
-	CharUtil::U32Char getAfterLast() const;
+   CharUtil::U32Char getAfterLast() const;
 
-	inline void setEnding(Ending e) { endsWith = e; }
+   inline void setEnding(Ending e)
+   {
+      endsWith = e;
+   }
 
-	inline Ending getEnding() const { return endsWith; }
+   inline Ending getEnding() const
+   {
+      return endsWith;
+   }
 
-	void setNewline();
+   void setNewline();
 
-	void printInfo(std::ostream& os);
+   void printInfo(std::ostream& os);
 };
 
 
 
 
 class StringVisitor {
-
+//
 public:
-	enum class VisitResult { BREAK, CONTINUE };
+   enum class VisitResult { BREAK, CONTINUE };
 
-	virtual ~StringVisitor() {}
-
-
-	int parseU32Stream(std::istream& is);
+   virtual ~StringVisitor() {}
 
 
-	int parseU32String(std::string str);
+   int parseU32Stream(std::istream& is);
+
+
+   int parseU32String(std::string str);
 
 protected:
-	virtual VisitResult visit(const CharUtil::U32Char&) = 0;
+   virtual VisitResult visit(const CharUtil::U32Char&) = 0;
 };
 
 
 
+/******** Klasse CharArray: ********/
+template <size_t size>
+class CharArray {
+   /* Für Memory::Objektspeicher. Dort müssen Strings *
+    * als Wert-Arrays gespeichert sein.               */
+   char buf[size+1] {'\0'};
+public:
+   void setStr(const char* str);
+
+   std::string getStr() const;
+
+   size_t capacity() const;
+};
 
 
 
-} // Ende namespace ostringutil
+/* Template-Funktionen einbinden: */
+#include "ostringutil.tpp"
+
+} // Ende namespace StringUtil
 
 
 

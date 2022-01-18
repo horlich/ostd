@@ -12,11 +12,6 @@ using namespace std;
 namespace Memory {
 
 
-//template <class T>
-//XPlatzHalter<T>::XPlatzHalter(const std::string& pname, T* pt) : name(pname), pointer(pt) {}
-
-
-
 
 }; // Ende Namespace Memory
 
