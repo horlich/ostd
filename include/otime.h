@@ -8,9 +8,10 @@
 #ifndef OTIME_H_
 #define OTIME_H_
 
-#include<sstream>
+//#include<sstream>
 
 #include "oexception.h"
+#include "oformat.h"
 #include "debug.h"
 
 
@@ -225,7 +226,7 @@ public:
 
 
 
-
+using fmt = const char*;
 
 
 class OTime {
@@ -238,6 +239,12 @@ class OTime {
    inline void init(long int);
 
 public:
+   /* Definierte Formatstrings für formatiere(): */
+   static constexpr const char* FMT_DATE_10  = "%d.%m.%Y";
+   static constexpr const char* FMT_NOW_19   = "%d.%m.%Y %H:%M:%S";
+   static constexpr const char* FMT_NOW_8    = "%H:%M:%S";
+   static constexpr const char* FMT_TMSTP_84 = "%Y%m%d.%H%M"; // Timestamp mit Format 8.4
+
    OTime();
 
    OTime(const char* timestr, const char* format);
@@ -252,7 +259,7 @@ public:
    }
 
    // Siehe dazu man localtime...
-   struct tm localtime() const;
+   const struct tm& localtime() const;
 
    inline int tt() const
    {
@@ -286,45 +293,14 @@ public:
 
    Day deltaDays(int d) const;
 
-   // Siehe dazu man strftime...
-   size_t formatiere(char* chbuf, size_t bufsize, const char* format) const;
+   /* Damit richtig formatiert wird, muß mit
+      os.imbue() die Locale gesetzt werden, z.B.
+      std::locale mylocale("");
+      os.imbue(mylocale);                        */
+   std::ostream& formatiere(const char* format, std::ostream& os = std::cout) const;
 
-   std::string formatiere(const char* format, size_t capacity) const;
-
-   inline std::string date10() const
-   {
-      return formatiere("%d.%m.%Y", 10);
-   }
-
-   inline std::string now19() const
-   {
-      return formatiere("%d.%m.%Y %H:%M:%S", 19);
-   }
-
-   inline std::string now8() const
-   {
-      return formatiere("%H:%M:%S", 8);
-   }
-
-   inline std::string timesql16() const
-   {
-      return formatiere("%Y-%m-%d %H:%M", 16);
-   }
-
-   inline std::string timesql19() const
-   {
-      return formatiere("%Y-%m-%d %H:%M:%S", 19);
-   }
-
-   // Timestamp mit Format 8.4
-   inline std::string tmstp84() const
-   {
-      return formatiere("%Y%m%d.%H%M", 13);
-   }
-
-   inline std::string getDatum() const
-   {
-      return date10();
+   inline std::ostream& printDate(std::ostream& os = std::cout) const {
+      return formatiere(FMT_DATE_10, os);
    }
 };
 

@@ -352,13 +352,21 @@ Day::operator bool() const
 }
 
 
-
 ostream& operator<<(ostream& os, const Day& td)
 {
-   const char forig = os.fill('0');
-   for (int i : {td.tt(), td.mm()}) os << setw(2) << i << '.';
-   os << setw(4) << td.jj();
-   os.fill(forig);
+   /* Verhindere, daß Jahreszahlen mit
+      Tausenderseparatoren angezeigt werden: */
+   locale old = os.imbue(locale::classic()); /* = locale("C") */
+   for (int i : {td.tt(), td.mm()}) {
+      if (i < 10) os.put('0');
+      os << i << '.';
+   }
+   if (td.jj() == 0) {
+      os << "0000";
+   } else {
+      os << td.jj();
+   }
+   os.imbue(old);
    return os;
 }
 
@@ -429,22 +437,7 @@ OTime::OTime(long int epoch)
 }
 
 
-string OTime::formatiere(const char* format, size_t capacity) const
-{
-   // Wenn capacity zu klein gewählt ist, dann ist
-   // der Output undefiniert!
-   char buf[++capacity]; // Endzeichen hinzurechnen!
-   OTime::formatiere(buf, capacity, format);
-   return buf;
-}
-
-size_t OTime::formatiere(char* chbuf, size_t bufsize, const char* format) const
-{
-   return strftime(chbuf, bufsize, format, &localTime);
-}
-
-
-struct tm OTime::localtime() const {
+const struct tm& OTime::localtime() const {
    return localTime;
 }
 
@@ -455,14 +448,26 @@ Day OTime::deltaDays(int d) const
    return Day(t);
 }
 
+
+std::ostream& OTime::formatiere(const char* format, std::ostream& os) const
+{
+   os << std::put_time(&localTime, format);
+   return os;
+}
+
 ostream& operator<<(ostream& os, OTime& t)
 {
-   return os << t.now19();
+   return t.formatiere(t.FMT_NOW_19, os);
 }
 
 
 
-void testAll() {
+void testAll()
+{
+//   Format::setGlobalDELokale();
+//   setlocale(LC_ALL, "");
+   std::locale mylocale("");
+   std::cout.imbue(mylocale);
    std::cout << "Teste otime:\n";
    std::cout << "Heute ist der " << Zeit::today() << '\n';
    Zeit::Day tag1;
@@ -480,6 +485,13 @@ void testAll() {
    for (int i = 0; i < maxi; ++i) {
       cout << tag3-- << '\n';
    }
+   cout << "Teste OTime:\n";
+   Zeit::OTime tim;
+   cout << "Aktuelle Zeit: " << tim << "\nDasselbe als Datum: ";
+   tim.printDate();
+   cout << "\nAusführlich: ";
+   tim.formatiere("%A, %d. %B %Y");
+   cout.put('\n');
    cout << "Ende Test otime.\n";
 }
 

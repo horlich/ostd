@@ -9,12 +9,13 @@
 #define OSTRINGUTIL_H_
 
 #include <string>
-#include <algorithm>
+//#include <algorithm>
 #include <vector>
-#include <iostream>
-#include <iomanip>
-#include <cwchar>
-#include <locale>
+//#include <iostream>
+//#include <sstream>
+//#include <iomanip>
+//#include <cwchar>
+//#include <locale>
 #include <codecvt>
 #include <cstring>
 
@@ -42,23 +43,10 @@ public:
 
 
 
-class KeinUTF8 : public OStringUtilException {
-public:
-   KeinUTF8(const std::string& message) :
-      OStringUtilException(message) {}
-
-   virtual ~KeinUTF8() = default;
-};
+using StrVec = std::vector<std::string>;
 
 
-
-
-
-
-typedef std::vector<std::string> StrVec;
-
-
-const char WHITESPACES[] = " \t\n\v\f\r";
+constexpr const char WHITESPACES[] = " \t\n\v\f\r";
 
 std::string rtrim(const std::string& str);
 
@@ -66,36 +54,9 @@ std::string ltrim(const std::string& str);
 
 std::string trim(const std::string& str);
 
-int split(const std::string& str, char tz, std::vector<std::string>& vec);
+int split(const std::string& str, char tz, StrVec& vec);
 
-
-
-
-void u8_to_upper(std::string& str);
-
-
-void u8_to_lower(std::string& str);
-
-
-
-int parseArgs(const std::string& str, std::vector<std::string> *vec);
-
-
-
-
-
-
-
-
-
-/*
- *             Umwandlung Multibyte-String <-> std::u32string
- * */
-
-extern std::wstring_convert<std::codecvt_utf8<char32_t>,char32_t> U32_CONVERTER;
-// Usage:
-// U32_CONVERTER.to_bytes(u32string)
-// U32_CONVERTER.from_bytes(std::string);
+int parseArgs(const std::string& str, StrVec& vec);
 
 
 
@@ -103,144 +64,41 @@ extern std::wstring_convert<std::codecvt_utf8<char32_t>,char32_t> U32_CONVERTER;
  *             Umwandlung Multibyte-String <-> Wide-String
  * */
 
+
+using WC_Converter =  std::wstring_convert<std::codecvt_utf8<wchar_t>>;
+/* Usage:
+ * WC_Converter conv
+ * conv.to_bytes(std::wstring);
+ * conv.from_bytes(std::string);
+ * conv.converted(); //
+ */
+
+using U32_Converter = std::wstring_convert<std::codecvt_utf8<char32_t>,char32_t>;
+/*
+   Siehe auch std::wbuffer_convert !
+*/
+
+ /* Konvertiere den MB-String in einen Wide-String
+  * und gib die Anzahl der Wide-Chars zurück.
+  * Gibt bei Fehler -1 zurück. Wahrscheinlichster
+  * Fehler: locale nicht gesetzt.
+  * Siehe auch 'man mblen'    */
 int getWSize(const char* str);
 
+/* WC_Converter ist diesen beiden Methoden vorzuziehen! */
 std::wstring toWstring(const char* str, size_t maxlen);
 
 std::wstring toWstring(std::string& s);
 
+/* Ermittle die Anzahl an Bytes in einem Wide-String.
+ * Gibt bei Fehler -1 zurück. Wahrscheinlichster
+ * Fehler: locale nicht gesetzt: */
+int getMBSize(const wchar_t* wstr);
 
-int getMBSize(const wchar_t* wstr, size_t maxlen);
-
+/* WC_Converter ist diesen beiden Methoden vorzuziehen! */
 std::string toMBstring(const wchar_t* wstr, size_t maxlen);
 
 std::string toMBstring(std::wstring& s);
-
-
-
-
-
-// Länge des Strings unter Berücksichtigung der UTF-Chars:
-int u8Strlen(const std::string& str);
-
-
-
-
-
-class ArgParser : protected StrVec {
-private:
-public:
-   int parse(std::string& str)
-   {
-      clear();
-      StringUtil::parseArgs(str, this);
-      return size();
-   }
-
-   std::string getArg(int i) const
-   {
-      return at(i);
-   }
-
-   inline int argc() const
-   {
-      return size();
-   }
-
-   inline bool empty() const
-   {
-      return StrVec::empty();
-   }
-};
-
-
-
-
-
-
-
-class U32String : public std::vector<CharUtil::U32Char> {
-public:
-   virtual ~U32String() = default;
-
-   virtual void resetValues();
-
-   bool containsGraph() const;
-
-   std::string str() const;
-};
-
-std::ostream& operator<<(std::ostream&, const U32String&);
-
-std::istream& operator>>(std::istream&, U32String&);
-
-
-
-
-
-
-class U32Token : public U32String {
-public:
-   enum class Ending { NULLSTR, SOFT_HYPHEN, SEPARATOR, SPACE, NEWLINE };
-
-   static std::string endingToString(Ending end)
-   {
-      switch (end) {
-      case Ending::NULLSTR:
-         return "NULLSTR";
-      case Ending::SOFT_HYPHEN:
-         return "SOFT_HYPHEN";
-      case Ending::SEPARATOR:
-         return "SEPARATOR";
-      case Ending::SPACE:
-         return "SPACE";
-      case Ending::NEWLINE:
-         return "NEWLINE";
-      default:
-         ;
-      }
-      return "FEHLER";
-   }
-
-private:
-   // afterLast ist NICHT Bestandteil des U8Token, sondern
-   // muß gegebenenfalls in ein neues U8Token eingelesen werden!
-   CharUtil::U32Char afterLast;
-   Ending endsWith;
-   static const std::string DEFAULT_TRENNER;
-
-public:
-   U32Token();
-
-   U32Token(std::istream&, const std::string& trenner = DEFAULT_TRENNER);
-
-   virtual ~U32Token() = default;
-
-   virtual void resetValues();
-
-   // Gegebenenfalls ist vorher resetValues() aufzurufen!
-   std::istream& init(std::istream&, const std::string& = DEFAULT_TRENNER);
-
-   void setAfterLast(CharUtil::U32Char uc);
-
-   void setAfterLast(char c);
-
-   CharUtil::U32Char getAfterLast() const;
-
-   inline void setEnding(Ending e)
-   {
-      endsWith = e;
-   }
-
-   inline Ending getEnding() const
-   {
-      return endsWith;
-   }
-
-   void setNewline();
-
-   void printInfo(std::ostream& os);
-};
 
 
 
@@ -253,13 +111,13 @@ public:
    virtual ~StringVisitor() {}
 
 
-   int parseU32Stream(std::istream& is);
+   int parseStream(std::wistream& is);
 
 
-   int parseU32String(std::string str);
+   int parseString(std::string str);
 
 protected:
-   virtual VisitResult visit(const CharUtil::U32Char&) = 0;
+   virtual VisitResult visit(wchar_t) = 0;
 };
 
 

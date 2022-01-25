@@ -53,7 +53,6 @@ extern DebugMess MESSAGE;
 #define PRINTDEBUGMESS MESSAGE.println(FILELINE);
 
 
-void printInfo(std::ostream& os, const CharUtil::U32Char& uc);
 
 
 

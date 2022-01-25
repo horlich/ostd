@@ -10,25 +10,17 @@
 
 
 #include <chrono>
-#include <ratio>
-#include <ctime>
+//#include <ratio>
+//#include <ctime>
 #include <iostream>
+#include <string>
 
 
 namespace TestUtil {
 
 typedef void (*fp_testrun)();
 
-using std::chrono::steady_clock;
-
-void printTime(fp_testrun meth, const std::string& testName, std::ostream& os = std::cout) {
-		os << "[printTime] *** Starte Test \'" << testName << "\'...\n";
-		auto anfang = steady_clock::now();
-		(*meth)(); // Testprogramm ausführen...
-		std::chrono::nanoseconds ns = steady_clock::now() - anfang;
-		double d = std::chrono::duration_cast<std::chrono::microseconds>(ns).count();
-		os << "[printTime] *** Test \'" << testName << "\' nach " << d / 1000 << " ms beendet." << std::endl;
-}
+void printTime(fp_testrun methode, const std::string& testName, std::ostream& os = std::cout);
 
 
 

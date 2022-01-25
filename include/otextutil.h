@@ -53,7 +53,7 @@ class ItemLine : public StringUtil::StringVisitor {
 	int buflen  = 0;
 	int maxcols = 0;
 
-	VisitResult visit(const CharUtil::U32Char& ch) override;
+	VisitResult visit(wchar_t) override;
 
 public:
 	/* Beschränkt schon die Speicherung der Texte mit maxcol. *
@@ -148,12 +148,12 @@ private:
 	const int TOKENPOS 			= 2;
 	const int WSPOS    			= 1;
 	const int BEGINPOS 			= 0;
-	int lastPos 				= BEGINPOS;
+	int lastPos 				   = BEGINPOS;
 	std::streampos lineStart	= 0;
 	std::streampos lineLength 	= 0;
 	std::streampos startNext 	= 0;
-	bool eoffound 				= false;
-	char *lineBuf 				= nullptr;
+	bool eoffound 	            = false;
+	wchar_t *lineBuf 				= nullptr;
 
 public:
 	LineExplorer(int lineLength);
@@ -168,7 +168,7 @@ public:
 
 	inline std::streampos getLinelength() const { return lineLength; }
 
-	std::string readLine(std::istream& is);
+	std::string readLine(std::wistream& is);
 };
 
 
@@ -183,7 +183,7 @@ class TextScroller {
 	 * Auf diese Weise kann ein Text rauf und runter gescrollt
 	 * werden                                                  */
 private:
-	std::stringstream* sstream = nullptr;
+	std::wstringstream* sstream = nullptr;
 	std::vector<std::string> lines;
 	int	scrollpos = 0; // Die erste angezeigte Zeile
 	Dimension panel;
@@ -198,15 +198,13 @@ private:
 	TextScroller& operator=(const TextScroller&);
 
 public:
-//	TextScroller(){ MESSAGE.println("TextScroller()"); }
-
 	TextScroller(Dimension screen);
 
 	virtual ~TextScroller();
 
 	inline Dimension getPanel() const { return panel; }
 
-	inline std::stringstream* getStream() { return sstream; }
+	inline std::wstringstream* getStream() { return sstream; }
 
 	inline int getScrollPos() const { return scrollpos; }
 

@@ -8,14 +8,17 @@
 #ifndef OCONSOLE_H_
 #define OCONSOLE_H_
 
+#include <string>
+#include <vector>
 #include <termios.h>
-#include <errno.h>
+#include <iostream>
+//#include <errno.h>
 #include <unistd.h>
 #include <sys/ioctl.h>
 #include <linux/kd.h>
 #include "otextutil.h"
-#include "oexception.h"
-#include "ocharutil.h"
+//#include "oexception.h"
+//#include "ocharutil.h"
 
 
 namespace OConsole {
@@ -46,7 +49,7 @@ public:
 
 
 
-std::string getWorkingDirektory();
+std::string getWorkingDirectory();
 
 
 /* Environment-Variablen abfragen: */
@@ -73,15 +76,15 @@ const int KEY_POS1				= 506;
 const int KEY_ENDE				= 507;
 const int KEY_BILD_UP			= 508;
 const int KEY_BILD_DOWN			= 509;
-const int KEY_F_1				= 510;
-const int KEY_F_2				= 511;
-const int KEY_F_3				= 512;
-const int KEY_F_4				= 513;
-const int KEY_F_5				= 514;
-const int KEY_F_6				= 515;
-const int KEY_F_7				= 516;
-const int KEY_F_8				= 517;
-const int KEY_F_9				= 518;
+const int KEY_F_1			   	= 510;
+const int KEY_F_2			   	= 511;
+const int KEY_F_3			   	= 512;
+const int KEY_F_4			   	= 513;
+const int KEY_F_5			   	= 514;
+const int KEY_F_6			   	= 515;
+const int KEY_F_7			   	= 516;
+const int KEY_F_8			   	= 517;
+const int KEY_F_9			   	= 518;
 const int KEY_F_10				= 519;
 const int KEY_F_11				= 520;
 const int KEY_F_12				= 521;

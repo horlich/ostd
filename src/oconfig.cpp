@@ -15,13 +15,13 @@ using namespace std;
 namespace Property {
 
 
-const string KEY_CONFIGFILE_READ("key_configfile_read");
+constexpr char KEY_CONFIGFILE_READ[] = "key_configfile_read";
 
 void SimpleConfigDatei::readMe() {
-	ifstream is(getPath().toString().c_str());
+	ifstream is(path);
 	bool isComment = false;
 	if (! is.is_open())
-		throw OFile::CannotOpen(getPath().toString());
+		throw OFile::CannotOpen(path);
 	char c;
 	int lineNr = 1;
 	string buf;
@@ -35,7 +35,7 @@ void SimpleConfigDatei::readMe() {
 			if (! buf.empty()) {
 				size_t trennPos = buf.find('=');
 				if (trennPos == string::npos)
-					throw ConfigSyntaxException(this, lineNr, "Trennzeichen fehlt");
+					throw ConfigSyntaxException(lineNr, "Trennzeichen fehlt");
 				string key(StringUtil::rtrim(buf.substr(0, trennPos)));
 				string val(StringUtil::trim(buf.substr(trennPos+1)));
 				wertehash[key] = val;

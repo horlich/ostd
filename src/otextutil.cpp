@@ -84,7 +84,7 @@ std::ostream& ItemLine::print(std::ostream& os, int maxcols) {
 }
 
 
-ItemLine::VisitResult ItemLine::visit(const CharUtil::U32Char& ch) {
+ItemLine::VisitResult ItemLine::visit(wchar_t ch) {
 	if (ch == '\n') return VisitResult::BREAK;
 	if (ch == '\t') {
 		textbuf.put(' ');
@@ -98,7 +98,7 @@ ItemLine::VisitResult ItemLine::visit(const CharUtil::U32Char& ch) {
 
 void ItemLine::setText(const std::string& str) {
 	textbuf.str("");
-	parseU32String(str);
+	parseString(str);
 }
 
 
@@ -211,7 +211,7 @@ void ItemRange::deleteItems() {
 
 
 LineExplorer::LineExplorer(int lsz) : linesize(lsz) {
-	lineBuf = new char[lsz + 1];
+	lineBuf = new wchar_t[lsz + 1];
 	lineBuf[lsz] = 0; // Endzeichen setzen!
 }
 
@@ -223,7 +223,7 @@ LineExplorer::~LineExplorer() {
 
 
 
-std::string LineExplorer::readLine(std::istream& is) {
+std::string LineExplorer::readLine(std::wistream& is) {
 	if (startNext > 0) {
 		is.seekg(startNext);
 	} else if (startNext < 0) {
@@ -236,7 +236,8 @@ std::string LineExplorer::readLine(std::istream& is) {
 	bool lineHasWs = false;
 	lineStart = is.tellg();
 	int currlength = 0;
-	CharUtil::U32CharCounter ucc;
+//	CharUtil::U32CharCounter ucc;
+//   int charCounter = 0;
 	while (is.good()) {
 		char ch = is.get();
 		currlength++;
@@ -244,8 +245,8 @@ std::string LineExplorer::readLine(std::istream& is) {
 		 * currlength: 		Die Position des (unbekannten) Zeichens NACH ch.
 		 * currlength - 1: 	Position von ch.
 		 * currlength - 2: 	Position des Zeichens VOR ch.                      */
-		float u32length = ucc.put(ch); // Zähle Multibyte-Zeichen (z.B. Umlaute)
-		bool overload = u32length > linesize;
+//		float u32length = ucc.put(ch); // Zähle Multibyte-Zeichen (z.B. Umlaute)
+		bool overload = currlength > linesize;
 		if (is.eof()) {
 			lineLength = currlength - 1; // EOF-Zeichen ignorieren.
 			eoffound = true;
@@ -297,7 +298,8 @@ std::string LineExplorer::readLine(std::istream& is) {
 	is.seekg(lineStart);
 	is.read(lineBuf,lineLength);
 	lineBuf[lineLength] = 0; // Endzeichen setzen
-	return lineBuf;
+	StringUtil::WC_Converter conv;
+	return conv.to_bytes(lineBuf);
 }
 
 
@@ -309,7 +311,7 @@ std::string LineExplorer::readLine(std::istream& is) {
  * */
 
 
-TextScroller::TextScroller(Dimension screen) : sstream(new std::stringstream), panel(screen) {}
+TextScroller::TextScroller(Dimension screen) : sstream(new std::wstringstream), panel(screen) {}
 
 
 TextScroller::~TextScroller() {
@@ -326,7 +328,7 @@ int TextScroller::getMaxScrollpos() const {
 void TextScroller::reset() {
 //	MESSAGE.println("TextScroller::reset()");
 	delete sstream;
-	sstream = new std::stringstream;
+	sstream = new std::wstringstream;
 	lines.clear();
 	scrollpos = 0;
 }

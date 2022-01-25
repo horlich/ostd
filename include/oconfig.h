@@ -8,9 +8,10 @@
 #ifndef OCONFIG_H_
 #define OCONFIG_H_
 
-#include <bitset>
+//#include <bitset>
 #include <map>
-#include <stdexcept>
+#include <unistd.h>
+//#include <stdexcept>
 
 #include "oexception.h"
 #include "ofile.h"
@@ -23,17 +24,16 @@ namespace Property {
 
 class ConfigSyntaxException : public OException::ParseException {
 private:
-	const OFile::Datei* configdatei;
-	unsigned int lineNr;
+	int lineNr;
 public:
-	ConfigSyntaxException(const OFile::Datei* d, unsigned int line, const std::string& mess) :
-		ParseException(mess), configdatei(d), lineNr(line){}
+	ConfigSyntaxException(int line, const std::string& mess) :
+		ParseException(mess), lineNr(line){}
 };
 
 
 
 
-class SimpleConfigDatei : public OFile::Datei {
+class SimpleConfigDatei {
 	/*
 	 *    Enthält Key-Wert-Paare, die durch das erste in der Zeile
 	 *    vorkommende '=' getrennt sind.
@@ -42,8 +42,9 @@ class SimpleConfigDatei : public OFile::Datei {
 	 * */
 private:
 	std::map<std::string, std::string> wertehash;
+	const char* path;
 public:
-	SimpleConfigDatei(const OFile::Path& p) : Datei(p) {};
+	SimpleConfigDatei(const char* _path) : path{_path} {};
 
 	void readMe();
 

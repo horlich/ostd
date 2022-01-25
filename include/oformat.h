@@ -8,19 +8,19 @@
 #ifndef OFORMAT_H_
 #define OFORMAT_H_
 
-#include<sstream>
-#include <string.h>
-#include <stdlib.h>
+//#include<sstream>
+//#include <string.h>
+//#include <stdlib.h>
 #include <iostream>
 #include <sstream>
-#include <stdio.h>
-#include <iomanip>
-#include <locale>
-#include <wchar.h>
+//#include <stdio.h>
+//#include <iomanip>
+//#include <locale>
+//#include <wchar.h>
 #include <cmath>
-#include <math.h>
-#include <stack>
-#include <locale>
+//#include <math.h>
+//#include <stack>
+//#include <locale>
 
 #include "ocharutil.h"
 #include "ostringutil.h"

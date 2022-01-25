@@ -57,9 +57,8 @@ std::ostream& Format::operator<< (std::ostream& os, const Format::Indent& in) {
 
 
 std::ostream& Format::printRahmenZeile(std::ostream& os, int zeilenLaenge, const std::string& links, const std::string& rechts, char zeilenMarker) {
-	int zll = StringUtil::u8Strlen(links);
-//	cout << links << " hat " << zll << endl;
-	int zlr = StringUtil::u8Strlen(rechts);
+	int zll = StringUtil::getWSize(links.c_str());
+	int zlr = StringUtil::getWSize(rechts.c_str());
 	int strl = zll + zlr;
 	/* Unter Berücksichtigung eines Zwischen(leer)zeichens: */
 	if ((strl+1) > zeilenLaenge)	{
