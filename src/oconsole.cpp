@@ -19,7 +19,7 @@ void ShellPrompt::initShell()
 {
    std::vector<std::string> commands;
    int bufsize = 300;
-   char buf[bufsize];
+	char buf[bufsize];
 
    for (;;) {
       commands.clear();
@@ -39,16 +39,17 @@ void ShellPrompt::initShell()
 std::string getWorkingDirectory()
 {
    char *success;
-   constexpr int BUFSIZE_MIN = 200;
-   int bsize = BUFSIZE_MIN;
+//   constexpr int BUFSIZE_MIN = 200;
+   int bsize =  NAME_MAX; /* Makro aus dirent.h == 255 */
+
    char *buf;
    for(;;) {
       buf = new char[bsize+1];
       success = ::getcwd(buf, bsize);
       if (success == nullptr) { /* Einlesen war fehlerhaft */
          delete buf; /* unbrauchbaren buf löschen! */
-         if (errno == ERANGE) { /* Buffer zu klein...  */
-            bsize += BUFSIZE_MIN;
+         if (errno == ERANGE) { /* Dürfte nicht sein: Buffer zu klein...  */
+            bsize += NAME_MAX;
             continue;
          }
          else {
@@ -216,7 +217,7 @@ int printWchar(wchar_t wc, std::ostream& os)
 
 
 /* bildet getch() aus curses.h nach: */
-wchar_t getch()
+wchar_t xgetch()
 {
    Termios term;
    term.disableBuffer();

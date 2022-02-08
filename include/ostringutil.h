@@ -18,6 +18,7 @@
 //#include <locale>
 #include <codecvt>
 #include <cstring>
+#include <regex>
 
 #include "oexception.h"
 #include "ocharutil.h"
@@ -61,9 +62,47 @@ int parseArgs(const std::string& str, StrVec& vec);
 
 
 /*
+               toUpper/toLower:
+*/
+/* Siehe Kapitel 28.2 der ISO 2020
+   Das Template convenience ist für alle Methoden,
+   die in Kapitel 28.2 angeführt sind, um diese
+   iterativ auf einen String anzuwenden.
+   Methoden brauchen #include <locale>:     */
+template <typename charType>
+std::basic_string<charType> convenience(const std::basic_string<charType>& ws, charType(*func_pointer)(charType, const std::locale&));
+
+/* Spezialisierungen: */
+
+std::string toUpper(const std::string& ws);
+
+std::wstring toUpper(const std::wstring& ws);
+
+std::string toLower(const std::string& ws);
+
+std::wstring toLower(const std::wstring& ws);
+
+
+/* Siehe Breymann S. 708
+   Verändert den übergebenen String selbst.
+   Als Argument kann jeder basic_string übergeben werden:
+   ACHTUNG: diese Variante ist fast zehnmal LANGSAMER als
+   die oben dargestellte mit conveniance!!              */
+template <typename charType> /* toUpper */
+void gross(std::basic_string<charType>& str, const std::locale& loc = std::locale("")) {
+   std::use_facet<std::ctype<charType>>(loc).toupper(str.data(), str.data() + str.length());
+}
+
+template <typename charType> /* toLower */
+void klein(std::basic_string<charType>& str, const std::locale& loc = std::locale("")) {
+   std::use_facet<std::ctype<charType>>(loc).tolower(str.data(), str.data() + str.length());
+}
+
+
+
+/*
  *             Umwandlung Multibyte-String <-> Wide-String
  * */
-
 
 using WC_Converter =  std::wstring_convert<std::codecvt_utf8<wchar_t>>;
 /* Usage:
@@ -101,7 +140,36 @@ std::string toMBstring(const wchar_t* wstr, size_t maxlen);
 std::string toMBstring(std::wstring& s);
 
 
+/* Mit den Methoden von std::ctype: */
 
+
+
+
+/*-----------------------/ String-Tokenizer /-------------------------------*/
+
+/* Siehe dazu auch 'man strtok' */
+
+
+template <typename charType>
+using Xiterator = std::regex_iterator<typename std::basic_string<charType>::const_iterator>;
+
+template <typename charType>
+using BStrVec = std::vector<std::basic_string<charType>>;
+
+template <typename charType>
+BStrVec<charType> tokenize_regex(const std::basic_string<charType>& str, const charType* muster);
+
+std::vector<std::wstring> tokenize_ws(const std::wstring& str);
+
+/* Fügt in einen String '\n' ein, sodaß linewidth nicht
+   überschritten wird:                                      */
+std::wstring wrap (const std::wstring& str, int linewidth);
+
+/* Gibt einen Vector aus den umgebrochenen Zeilen zurück: */
+std::vector<std::wstring> wrap_vec (const std::wstring& str, int linewidth);
+
+
+/*--------------------------/ StringVisitor: /----------------------------*/
 
 class StringVisitor {
 //

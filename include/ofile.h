@@ -45,6 +45,11 @@ namespace OFile {
  *                     Path:
  *
  * */
+ 
+ /* ACHTUNG: Seit C++17 gibt es die Filesystem Library
+  * Header <filesystem>
+  * https://en.cppreference.com/w/cpp/filesystem
+  * So auch: std::filesystem::path !!               */
 
 class Path : protected std::vector<std::string> {
 	//
@@ -137,7 +142,7 @@ bool mkpath(const std::string& path, mode_t mode = 0775);
 
 /*************************| Dateien |******************************/
 
-/* Dateien-Tests mit 'man access(2)' */
+/* Dateien-Tests für Existenz und Rechte mit faccessat() in 'man access(2)' */
 
 /* throws CannotRead: */
 int getFileSize(std::ifstream* is);

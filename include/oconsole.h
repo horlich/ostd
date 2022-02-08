@@ -12,6 +12,7 @@
 #include <vector>
 #include <termios.h>
 #include <iostream>
+#include <dirent.h>
 //#include <errno.h>
 #include <unistd.h>
 #include <sys/ioctl.h>
@@ -145,7 +146,7 @@ int printWchar(wchar_t wc, std::ostream& os = std::cout);
 
 /* bildet getch() aus curses.h nach.                     *
  * Bei unbekannter Funktionstaste wird -1 zurückgegeben: */
-wchar_t getch();
+wchar_t xgetch();
 
 
 

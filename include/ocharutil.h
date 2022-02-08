@@ -55,6 +55,24 @@ int numVal(char c);
 void testNumVal(std::ostream& = std::cout);
 
 
+/*
+   Aus Kapitel 28.2 der ISO 2020:
+   (Braucht #include <locale>)
+   template<class charT> bool isspace (charT c, const locale& loc);
+   template<class charT> bool isprint (charT c, const locale& loc);
+   template<class charT> bool iscntrl (charT c, const locale& loc);
+   template<class charT> bool isupper (charT c, const locale& loc);
+   template<class charT> bool islower (charT c, const locale& loc);
+   template<class charT> bool isalpha (charT c, const locale& loc);
+   template<class charT> bool isdigit (charT c, const locale& loc);
+   template<class charT> bool ispunct (charT c, const locale& loc);
+   template<class charT> bool isxdigit(charT c, const locale& loc);
+   template<class charT> bool isalnum (charT c, const locale& loc);
+   template<class charT> bool isgraph (charT c, const locale& loc);
+   template<class charT> bool isblank (charT c, const locale& loc);
+   template<class charT> charT toupper(charT c, const locale& loc);
+   template<class charT> charT tolower(charT c, const locale& loc);
+*/
 
 
 class KeinUtf8 : public OException::ParseException  {
