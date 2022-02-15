@@ -132,6 +132,49 @@ std::ostream& operator<<(std::ostream& os, const Path& p)
 
 
 
+/*-----------------------/ GetSize: /------------------------*/
+
+
+
+using std::filesystem::directory_entry;
+using std::filesystem::recursive_directory_iterator;
+
+GetSize::GetSize(const std::string& dir)
+{
+   for (const directory_entry& entry : recursive_directory_iterator(dir)) {
+      if ((! entry.is_regular_file()) || (entry.is_symlink())) continue;
+      sum += entry.file_size();
+   }
+}
+
+
+std::ostream& operator<<(std::ostream& os, const GetSize& sz)
+{
+   long long sum = sz.size();
+   if (sum < 1e3) {
+      os << sum << " Bytes";
+      return os;
+   }
+   auto oldf = os.setf(std::ios::fixed, std::ios::floatfield);
+   auto oldp = os.precision(1);
+   double quotient;
+   if (sum < 1e6) {
+      quotient = sum / 1.0e3;
+      os << quotient << " K";
+   }
+   else if (sum < 1e9) {
+      quotient = sum / 1.0e6;
+      os << quotient << " M";
+   }
+   else {
+      quotient = sum / 1.0e9;
+      os << quotient << " G";
+   }
+   os.setf(oldf);
+   os.precision(oldp);
+   return os;
+}
+
 
 
 

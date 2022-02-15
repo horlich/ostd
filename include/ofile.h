@@ -12,6 +12,7 @@
 //#include <vector>
 //#include <string.h>
 #include <algorithm>
+#include <filesystem>
 //#include <sys/stat.h>
 //#include <sys/types.h>
 //#include <fcntl.h>
@@ -45,7 +46,7 @@ namespace OFile {
  *                     Path:
  *
  * */
- 
+
  /* ACHTUNG: Seit C++17 gibt es die Filesystem Library
   * Header <filesystem>
   * https://en.cppreference.com/w/cpp/filesystem
@@ -137,6 +138,23 @@ public:
 /* Ordner-Pfad (rekursiv) erzeugen */
 /* Siehe dazu 'man mkdir(2)':      */
 bool mkpath(const std::string& path, mode_t mode = 0775);
+
+
+
+/*-----------------------/ GetSize: /---------------------*/
+
+class GetSize {
+   /* Speicherplatz des Ordnerinhaltes ermitteln */
+   long long sum = 0;
+
+public:
+   GetSize(const std::string& dir);
+
+   inline long long size() const { return sum; }
+};
+
+std::ostream& operator<<(std::ostream& os, const GetSize& sz);
+
 
 
 
