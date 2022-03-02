@@ -24,14 +24,14 @@ std::ostream& TextUtil::operator<<(std::ostream& os, const Dimension& d) {
 
 
 
-Dimension Dimension::operator+(const Dimension& d) const {
+constexpr Dimension Dimension::operator+(const Dimension& d) const {
 	Dimension ret;
 	ret.height = height + d.height;
 	ret.width  = width + d.width;
 	return ret;
 }
 
-Dimension Dimension::operator-(const Dimension& d) const {
+constexpr Dimension Dimension::operator-(const Dimension& d) const {
 	/* noch nicht getestet!!! */
 	Dimension ret;
 	ret.height = height - d.height;

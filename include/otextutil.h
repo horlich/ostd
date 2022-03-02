@@ -23,19 +23,19 @@ namespace TextUtil {
 struct Dimension {
 	int height = -1;
 	int width  = -1;
-	Dimension(int h = 0, int w = 0) : height(h), width(w){}
+	constexpr Dimension(int h = 0, int w = 0) : height(h), width(w){}
 
-	bool operator==(const Dimension& d) const {
+	constexpr bool operator==(const Dimension& d) const {
 		return ((height == d.height) && (width == d.width));
 	}
 
-	bool operator!=(const Dimension& d) const {
+	constexpr bool operator!=(const Dimension& d) const {
 		return ((height != d.height) || (width != d.width));
 	}
 
-	Dimension operator+(const Dimension& d) const;
+	constexpr Dimension operator+(const Dimension& d) const;
 
-	Dimension operator-(const Dimension& d) const;
+	constexpr Dimension operator-(const Dimension& d) const;
 };
 
 std::ostream& operator<<(std::ostream&, const Dimension&);

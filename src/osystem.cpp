@@ -3,6 +3,18 @@
 namespace System {
 
 
+/*-------------------------/ UserInfo: /----------------------*/
+
+void fillPwdEntry__(struct passwd* pwd, PwdEntry* entry)
+{
+   entry->name = pwd->pw_name;
+   entry->information = pwd->pw_gecos;
+   entry->homedir = pwd->pw_dir;
+   entry->shell = pwd->pw_shell;
+   entry->uid = pwd->pw_uid;
+   entry->gid = pwd->pw_gid;
+}
+
 
 UserInfo::UserInfo()
 {
@@ -16,12 +28,7 @@ UserInfo::UserInfo()
          weil dieser seine char*-Werte jedesmal überschreibt.
          Deshalb müssen alle Werte nach PwdEntry kopiert
          werden: */
-      entry.name = pwd->pw_name;
-      entry.information = pwd->pw_gecos;
-      entry.homedir = pwd->pw_dir;
-      entry.shell = pwd->pw_shell;
-      entry.uid = pwd->pw_uid;
-      entry.gid = pwd->pw_gid;
+      fillPwdEntry__(pwd, &entry);
       pvec.push_back(std::move(entry)); /* entry darf nicht mehr verwendet werden! */
    }
    endpwent();
@@ -56,15 +63,266 @@ const PwdEntry& UserInfo::getEntry(const std::string& name) const
 }
 
 
+PwdEntry getUser(uid_t uid)
+{
+   struct passwd* pwd = getpwuid(uid);
+   if (pwd == nullptr) {
+      std::stringstream buf;
+      buf << __PRETTY_FUNCTION__ << ": UID " << uid << " existiert nicht.";
+      throw OException::IndexOutOfBoundsException(buf.str());
+   }
+   PwdEntry ret;
+   fillPwdEntry__(pwd, &ret);
+   return ret;
+}
+
+
+PwdEntry getUser(const std::string& name)
+{
+   struct passwd* pwd = getpwnam(name.c_str());
+   if (pwd == nullptr) {
+      std::stringstream buf;
+      buf << __PRETTY_FUNCTION__ << ": User " << name << " existiert nicht.";
+      throw OException::IndexOutOfBoundsException(buf.str());
+   }
+   PwdEntry ret;
+   fillPwdEntry__(pwd, &ret);
+   return ret;
+}
 
 
 
+/*---------------------------/ StatVfs /------------------------------*/
+
+StatVfs::StatVfs(const std::string& file)
+{
+   if (statvfs(file.c_str(), &buf) != 0)
+      throw System::OSystemException("Aufruf von statvfs() mißlungen.");
+}
 
 
 
+/*-------------------------/ MountedFsList: /----------------------*/
+
+MountedFsList::MountedFsList()
+{
+   FILE* stream = setmntent(MOUNTTAB_FILE, "r");
+   struct mntent* content;
+   while ((content = getmntent(stream))) {
+      if (! std::any_of(FSYSTEMS.begin(), FSYSTEMS.end(), [&] (std::string type) {
+      return (type == content->mnt_type);
+      })) continue;
+      MtabEntry entry;
+      entry.dir = content->mnt_dir;
+      entry.device = content->mnt_fsname;
+      entry.type = content->mnt_type;
+      dir_width = std::max(dir_width, static_cast<int>(entry.dir.length()));
+      type_width = std::max(type_width, static_cast<int>(entry.type.length()));
+      entries.push_back(std::move(entry));
+   }
+   endmntent(stream);
+}
 
 
 
+/*---------------------------/ ProcStatusMap: /------------------------------*/
+
+namespace fs = std::filesystem;
+using PidMap = std::map<int, fs::path>;
+
+void setName__(const std::string& str, ProcStatus& ps) {
+   for (char c : str) {
+      if (isspace(c)) {
+         if (ps.progName.empty()) {
+            continue; /* Führende WS */
+         } else {
+            break; /* String schon eingelesen */
+         }
+      } else {
+         ps.progName.push_back(c);
+      }
+   }
+}
+
+void setPPid__(const std::string& str, ProcStatus& ps) {
+   ps.ppid = std::stoi(str);
+}
+
+void setPid__(const std::string& str, ProcStatus& ps) {
+   ps.pid = std::stoi(str);
+}
+
+void setUid__(std::string str, ProcStatus& ps) {
+   size_t idx = 0;
+   int uidsize = ps.uid.size();
+   for (int i = 0; i < uidsize; ++i) {
+      ps.uid[i] = std::stoi(str, &idx);
+      str = str.substr(idx, str.length());
+   }
+}
+
+
+/* Gib eine Map aus mit den PID's und den
+   dazugehörigen /proc/PID-Pfaden:     */
+PidMap getPidMap__()
+{
+   static constexpr char procpath[] {"/proc"};
+   PidMap ret;
+
+   for (const fs::directory_entry& entry : fs::directory_iterator(procpath)) {
+      const fs::path& epath = entry.path();
+      const std::string fn = epath.filename().string();
+      bool is_int = true;
+      for (char ch : fn) {
+         if (! std::isdigit(ch)) {
+            is_int = false;
+            break;
+         }
+      }
+      if (! is_int) continue;
+      ret[std::stoi(fn)] = epath;
+   }
+   return ret;
+}
+
+/* Lies die Datei /proc/PID/status ein, erzeuge ein
+   ProcStatus-Objekt und füge es der ProcStatusMap hinzu: */
+void readStatus__(fs::path p, ProcStatusMap& smap)
+{
+   p /= "status";
+   if (! fs::exists(p)) return;
+   std::ifstream is(p);
+   static constexpr int bufsize{300};
+   char buf[bufsize+1];
+   ProcStatus pstatus;
+   int treffer = 0;
+   while (is.getline(buf,bufsize)) {
+      if (treffer >= 4) break; /* Daten wurden bereits vollständig eingelesen */
+      std::string line(buf);
+      /* Namen einlesen versuchen: */
+      if (line.find("Name:") == 0) { /* TODO: alle find() durch begins_with() ersetzen! */
+         setName__(line.substr(5, line.length()), pstatus);
+         ++treffer;
+      } else if (line.find("Uid:") == 0) {
+         setUid__(line.substr(4, line.length()), pstatus);
+         ++treffer;
+      } else if (line.find("PPid:") == 0) {
+         setPPid__(line.substr(5, line.length()), pstatus);
+         ++treffer;
+      } else if (line.find("Tgid:") == 0) {
+         setPid__(line.substr(5, line.length()), pstatus);
+         ++treffer;
+      }
+   }
+   is.close();
+   int parent = pstatus.ppid;
+   if (parent > 0) {
+      smap[parent].children.push_back(pstatus.pid);
+   }
+   smap[pstatus.pid] = std::move(pstatus); /* pstatus NICHT mehr verwenden! */
+}
+
+
+ProcStatusMap getStatusMap() {
+   ProcStatusMap smap;
+   PidMap pmap = getPidMap__();
+   for(auto pidpath : pmap) {
+      readStatus__(pidpath.second, smap);
+   }
+   return smap;
+}
+
+
+
+/*------------------------/ statische Funktionen: /-------------------------*/
+
+void printSystemDaten(std::ostream& os)
+{
+   struct utsname uts_info;
+  uname(&uts_info);
+   os << "Maschine:       " << uts_info.machine
+      << "\nCPU-Kerne:      " << std::thread::hardware_concurrency()
+      << "\nBetriebssystem: " << uts_info.sysname
+      << "\nVersion:        " << uts_info.version
+      << "\nKernel:         " << uts_info.release
+      << "\nHostname:       " << uts_info.nodename << "\n";
+}
+
+
+void printDirSize__(const std::string& path, std::ostream& os)
+{
+   try {
+      OFile::GetSize sz(path);
+      os << std::setw(18) << path << std::setw(8) << sz << "\n";
+   }
+   catch (std::exception& e) {
+      os << "Verzeichnis '" << path << "' konnte nicht gelesen werden.\n";
+   }
+}
+
+
+void printUserSpace(std::ostream& os)
+{
+   System::UserInfo uinfo;
+   std::vector<std::thread*> threads;
+   for (System::PwdEntry entry : uinfo.getEntries()) {
+      if (! std::filesystem::exists(entry.homedir)) continue;
+      /* zu std::ref(os) siehe:
+         https://stackoverflow.com/questions/61985888/why-the-compiler-complains-that-stdthread-arguments-must-be-invocable-after-co */
+      std::thread* th = new std::thread(printDirSize__, entry.homedir, std::ref(os));
+      threads.push_back(th);
+   }
+   for (auto th : threads) {
+      th->join();
+      delete th;
+   }
+}
+
+
+void humanReadableBytes(long long bytes, std::ostream& os)
+{
+   if (bytes < 1e3) {
+      os << bytes << " Bytes";
+      return;
+   }
+   auto oldf = os.setf(std::ios::fixed, std::ios::floatfield);
+   auto oldp = os.precision(1);
+   double quotient;
+   if (bytes < 1e6) {
+      quotient = bytes / 1.0e3;
+      os << quotient << " K";
+   }
+   else if (bytes < 1e9) {
+      quotient = bytes / 1.0e6;
+      os << quotient << " M";
+   }
+   else {
+      quotient = bytes / 1.0e9;
+      os << quotient << " G";
+   }
+   os.setf(oldf);
+   os.precision(oldp);
+}
+
+
+void printFsSpace(std::ostream& os)
+{
+   MountedFsList mlist;
+   for (MtabEntry entry : mlist.getEntries()) {
+      StatVfs sstat(entry.dir);
+      std::string type = '(' + entry.type + ')';
+      os << std::setw(mlist.getDirCol() + 2) << entry.dir << std::setw(mlist.getTypeCol() + 3) << type << " Frei: " << std::setw(6);
+      System::humanReadableBytes(sstat.getAvailable(), os);
+      os << " von " << std::setw(6);
+      System::humanReadableBytes(sstat.getCapacity());
+      os << "\n";
+   }
+}
+
+
+/*-----------------------/ Exceptions: /--------------------------*/
+
+OSystemException::OSystemException(const std::string& what) : Fehler(what) {}
 
 
 } // Ende Namespace System

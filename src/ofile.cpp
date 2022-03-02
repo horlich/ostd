@@ -136,12 +136,16 @@ std::ostream& operator<<(std::ostream& os, const Path& p)
 
 
 
-using std::filesystem::directory_entry;
-using std::filesystem::recursive_directory_iterator;
+namespace fs = std::filesystem;
 
 GetSize::GetSize(const std::string& dir)
 {
-   for (const directory_entry& entry : recursive_directory_iterator(dir)) {
+   fs::path p(dir);
+   if (! fs::exists(dir))
+      throw FileNotFound(FileNotFound::notFound(dir));
+   if (! fs::is_directory(p))
+      throw NotaDirectory(NotaDirectory::notaDir(dir));
+   for (const fs::directory_entry& entry : fs::recursive_directory_iterator(p)) {
       if ((! entry.is_regular_file()) || (entry.is_symlink())) continue;
       sum += entry.file_size();
    }
@@ -150,6 +154,7 @@ GetSize::GetSize(const std::string& dir)
 
 std::ostream& operator<<(std::ostream& os, const GetSize& sz)
 {
+   /* TODO: System::humanReadableBytes() implementieren! */
    long long sum = sz.size();
    if (sum < 1e3) {
       os << sum << " Bytes";

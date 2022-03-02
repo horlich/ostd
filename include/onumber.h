@@ -13,7 +13,9 @@ namespace ONumber {
 /* Prüft, ob Zahl gerade oder ungerade ist: */
 bool istGerade(long i);
 
-long flip(long l); /* l * -1 binär */
+
+/* std::negate im Header <functional> ist viel schneller! */
+long negate(long l); /* l * -1 binär */
 
 } /* Ende Namespace ONumber */
 

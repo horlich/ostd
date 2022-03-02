@@ -6,8 +6,13 @@
 #include <algorithm>
 #include <sstream>
 #include <pwd.h>
+#include <thread>
+#include <mntent.h>
+#include <sys/statvfs.h>
+#include <sys/utsname.h>
 
 #include "oexception.h"
+#include "ofile.h"
 
 
 
@@ -49,11 +54,129 @@ public:
    const PwdEntry& getEntry(const std::string& name) const;
 };
 
+PwdEntry getUser(uid_t uid);
+
+PwdEntry getUser(const std::string& name);
+
+
+/*-----------------------/ MountedFsList: /-----------------------*/
+
+const std::array<std::string,4> FSYSTEMS { "ext4", "ext3", "vfat", "fuseblk" };
+constexpr char MOUNTTAB_FILE[] {"/proc/mounts"};
+
+struct MtabEntry {
+   std::string device, dir, type;
+};
+
+class MountedFsList {
+   //
+   std::vector<MtabEntry> entries;
+   int dir_width  = 0;
+   int type_width = 0;
+
+public:
+   MountedFsList();
+
+   inline const std::vector<MtabEntry>& getEntries()
+   {
+      return entries;
+   }
+
+   inline int getDirCol() const
+   {
+      return dir_width;
+   }
+
+   inline int getTypeCol() const
+   {
+      return type_width;
+   }
+};
+
+
+/*----------------------------/ StatVfs /------------------------------*/
+
+class StatVfs {
+   /* siehe statvfs(3) */
+   struct statvfs buf;
+public:
+   StatVfs(const std::string& file);
+
+   /* Filesystem block size */
+   inline int getBlockSize() const
+   {
+      return buf.f_bsize;
+   }
+
+   /* Speicherkapazität des Filesystems: */
+   inline long long getCapacity() const
+   {
+      return buf.f_frsize * buf.f_blocks;
+   }
+
+   /* ...davon noch frei */
+   inline long long getAvailable() const
+   {
+      return buf.f_frsize * buf.f_bavail;
+   }
+};
+
+
+/*--------------------/ ProcStatusMap: /-------------------------*/
+
+/* Liest die Prozessdaten aus /proc/[PID]/status */
+
+struct ProcStatus {
+   std::string progName;
+   int pid {-1};
+   int ppid{-1};
+   std::array<int, 4> uid{-1,-1,-1,-1};
+   std::vector<int> children;
+
+   inline bool hasChildren()
+   {
+      return children.empty() == false;
+   }
+};
+
+using ProcStatusMap = std::map<int, ProcStatus>;
+
+/* ProcStatusMap enthält als Keys die PID's
+   und als Values die ProcStatus-Objekte.  */
+ProcStatusMap getStatusMap();
+
+
+
+/*---------------------/ verschiedene statische Funktionen: ----------------------*/
+
+void humanReadableBytes(long long bytes, std::ostream& os = std::cout);
+
+/* Allgemeine Systemdaten, wie z.B. Anzahl CPU-Kerne... */
+void printSystemDaten(std::ostream& os = std::cout);
+
+/* Gibt den Speicherplatz der /home/... Directories aus: */
+void printUserSpace(std::ostream& os = std::cout);
+
+/* Bildet du nach: */
+void printFsSpace(std::ostream& os = std::cout);
 
 
 
 
 
+
+/*
+ *                     Exceptions:
+ *
+ * */
+
+
+class OSystemException : public OException::Fehler {
+public:
+   OSystemException(const std::string& what);
+
+   virtual ~OSystemException() = default;
+};
 
 
 

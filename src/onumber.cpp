@@ -14,14 +14,14 @@ namespace ONumber {
 
 bool istGerade(long i)
 {
-   static const unsigned char mask = 1; /* nur das 1. Bit ist gesetzt */
+   static constexpr unsigned char mask = 1; /* nur das 1. Bit ist gesetzt */
    /* Prüft das gesetzte 1. Bit in mask mit i.
     * Wenn gesetzt, dann ist i ungerade:    */
    return !(i & mask); /* "nicht ungerade" */
 }
 
 
-long flip(long l)
+long negate(long l)
 {
    return ~l + 1;
 }
