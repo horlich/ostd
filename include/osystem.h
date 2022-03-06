@@ -10,6 +10,11 @@
 #include <mntent.h>
 #include <sys/statvfs.h>
 #include <sys/utsname.h>
+#include <sys/types.h>
+#include <sys/wait.h>
+#include <unistd.h>
+//#include <exception>
+
 
 #include "oexception.h"
 #include "ofile.h"
@@ -156,6 +161,8 @@ void printSystemDaten(std::ostream& os = std::cout);
 
 /* Gibt den Speicherplatz der /home/... Directories aus: */
 void printUserSpace(std::ostream& os = std::cout);
+/* langsamere Variante mit fork() */
+void printUserSpaceFork(std::ostream& os = std::cout);
 
 /* Bildet du nach: */
 void printFsSpace(std::ostream& os = std::cout);

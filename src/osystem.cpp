@@ -130,29 +130,35 @@ MountedFsList::MountedFsList()
 namespace fs = std::filesystem;
 using PidMap = std::map<int, fs::path>;
 
-void setName__(const std::string& str, ProcStatus& ps) {
+void setName__(const std::string& str, ProcStatus& ps)
+{
    for (char c : str) {
       if (isspace(c)) {
          if (ps.progName.empty()) {
             continue; /* Führende WS */
-         } else {
+         }
+         else {
             break; /* String schon eingelesen */
          }
-      } else {
+      }
+      else {
          ps.progName.push_back(c);
       }
    }
 }
 
-void setPPid__(const std::string& str, ProcStatus& ps) {
+void setPPid__(const std::string& str, ProcStatus& ps)
+{
    ps.ppid = std::stoi(str);
 }
 
-void setPid__(const std::string& str, ProcStatus& ps) {
+void setPid__(const std::string& str, ProcStatus& ps)
+{
    ps.pid = std::stoi(str);
 }
 
-void setUid__(std::string str, ProcStatus& ps) {
+void setUid__(std::string str, ProcStatus& ps)
+{
    size_t idx = 0;
    int uidsize = ps.uid.size();
    for (int i = 0; i < uidsize; ++i) {
@@ -203,13 +209,16 @@ void readStatus__(fs::path p, ProcStatusMap& smap)
       if (line.find("Name:") == 0) { /* TODO: alle find() durch begins_with() ersetzen! */
          setName__(line.substr(5, line.length()), pstatus);
          ++treffer;
-      } else if (line.find("Uid:") == 0) {
+      }
+      else if (line.find("Uid:") == 0) {
          setUid__(line.substr(4, line.length()), pstatus);
          ++treffer;
-      } else if (line.find("PPid:") == 0) {
+      }
+      else if (line.find("PPid:") == 0) {
          setPPid__(line.substr(5, line.length()), pstatus);
          ++treffer;
-      } else if (line.find("Tgid:") == 0) {
+      }
+      else if (line.find("Tgid:") == 0) {
          setPid__(line.substr(5, line.length()), pstatus);
          ++treffer;
       }
@@ -223,7 +232,8 @@ void readStatus__(fs::path p, ProcStatusMap& smap)
 }
 
 
-ProcStatusMap getStatusMap() {
+ProcStatusMap getStatusMap()
+{
    ProcStatusMap smap;
    PidMap pmap = getPidMap__();
    for(auto pidpath : pmap) {
@@ -239,7 +249,7 @@ ProcStatusMap getStatusMap() {
 void printSystemDaten(std::ostream& os)
 {
    struct utsname uts_info;
-  uname(&uts_info);
+   uname(&uts_info);
    os << "Maschine:       " << uts_info.machine
       << "\nCPU-Kerne:      " << std::thread::hardware_concurrency()
       << "\nBetriebssystem: " << uts_info.sysname
@@ -277,6 +287,26 @@ void printUserSpace(std::ostream& os)
       delete th;
    }
 }
+
+
+void printUserSpaceFork(std::ostream& os)
+{
+   System::UserInfo uinfo;
+   for (System::PwdEntry entry : uinfo.getEntries()) {
+      if (! std::filesystem::exists(entry.homedir)) continue;
+      switch (fork()) {
+      case -1:
+         throw OSystemException("fork()");
+      case 0:
+         printDirSize__(entry.homedir, os);
+         exit(EXIT_SUCCESS);
+      default:
+         wait(nullptr);
+         break;
+      }
+   }
+}
+
 
 
 void humanReadableBytes(long long bytes, std::ostream& os)
