@@ -243,6 +243,59 @@ ProcStatusMap getStatusMap()
 }
 
 
+/*------------------------/ becomeDaemon: /-------------------------*/
+
+
+int                                     /* Returns 0 on success, -1 on error */
+becomeDaemon(int flags)
+{
+    int maxfd, fd;
+
+    switch (fork()) {                   /* Become background process */
+    case -1: return -1;
+    case 0:  break;                     /* Child falls through... */
+    default: _exit(EXIT_SUCCESS);       /* while parent terminates */
+    }
+
+    if (setsid() == -1)                 /* Become leader of new session */
+        return -1;
+
+    switch (fork()) {                   /* Ensure we are not session leader */
+    case -1: return -1;
+    case 0:  break;
+    default: _exit(EXIT_SUCCESS);
+    }
+
+    if (!(flags & Daemon::NO_UMASK0))
+        umask(0);                       /* Clear file mode creation mask */
+
+    if (!(flags & Daemon::NO_CHDIR))
+        if (chdir("/") != 0) {/* Compilerwarnung umgehen */}  /* Change to root directory */
+
+    if (!(flags & Daemon::NO_CLOSE_FILES)) { /* Close all open files */
+        maxfd = sysconf(_SC_OPEN_MAX);
+        if (maxfd == -1)                /* Limit is indeterminate... */
+            maxfd = Daemon::MAX_CLOSE;       /* so take a guess */
+
+        for (fd = 0; fd < maxfd; fd++)
+            close(fd);
+    }
+    if (!(flags & Daemon::NO_REOPEN_STD_FDS)) {
+        close(STDIN_FILENO);            /* Reopen standard fd's to /dev/null */
+
+        fd = open("/dev/null", O_RDWR);
+
+        if (fd != STDIN_FILENO)         /* 'fd' should be 0 */
+            return -1;
+        if (dup2(STDIN_FILENO, STDOUT_FILENO) != STDOUT_FILENO)
+            return -1;
+        if (dup2(STDIN_FILENO, STDERR_FILENO) != STDERR_FILENO)
+            return -1;
+    }
+    return 0;
+}
+
+
 
 /*------------------------/ statische Funktionen: /-------------------------*/
 
@@ -250,12 +303,18 @@ void printSystemDaten(std::ostream& os)
 {
    struct utsname uts_info;
    uname(&uts_info);
-   os << "Maschine:       " << uts_info.machine
-      << "\nCPU-Kerne:      " << std::thread::hardware_concurrency()
-      << "\nBetriebssystem: " << uts_info.sysname
-      << "\nVersion:        " << uts_info.version
-      << "\nKernel:         " << uts_info.release
-      << "\nHostname:       " << uts_info.nodename << "\n";
+   os <<   "Maschine:        " << uts_info.machine
+      << "\nCPU-Kerne:       " << std::thread::hardware_concurrency()
+      << "\nBetriebssystem:  " << uts_info.sysname
+      << "\nVersion:         " << uts_info.version
+      << "\nKernel:          " << uts_info.release
+      << "\nHostname:        " << uts_info.nodename;
+   char buf[L_ctermid]; /* siehe ctermid(3) */
+   ctermid(buf);
+   os << "\nContr. Terminal: " << buf;
+   pid_t fpg = tcgetpgrp(STDIN_FILENO);
+   os << "\nTerminal PGID:   " << fpg
+      << "\nSession ID:      " << getsid(0) << '\n';
 }
 
 

@@ -13,7 +13,7 @@
 #include <sys/types.h>
 #include <sys/wait.h>
 #include <unistd.h>
-//#include <exception>
+#include <fcntl.h>
 
 
 #include "oexception.h"
@@ -149,6 +149,25 @@ using ProcStatusMap = std::map<int, ProcStatus>;
 /* ProcStatusMap enthält als Keys die PID's
    und als Values die ProcStatus-Objekte.  */
 ProcStatusMap getStatusMap();
+
+
+
+/*---------------------/ becomeDaemon: ----------------------*/
+
+/* Adaptierung des Codebeispiels in Kerrisk S.770f */
+
+namespace Daemon {
+/* Bit-mask values for 'flags' argument of becomeDaemon() */
+   constexpr int NO_CHDIR           {1};     /* Don't chdir("/") */
+   constexpr int NO_CLOSE_FILES     {1<<1};  /* Don't close all open files */
+   constexpr int NO_REOPEN_STD_FDS  {1<<2};  /* Don't reopen stdin, stdout, and
+                                                stderr to /dev/null */
+   constexpr int NO_UMASK0          {1<<3};  /* Don't do a umask(0) */
+   constexpr int MAX_CLOSE          {8192};  /* Maximum file descriptors to close if
+                                       sysconf(_SC_OPEN_MAX) is indeterminate */
+} // namespace Daemon
+
+int becomeDaemon(int flags);
 
 
 

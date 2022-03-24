@@ -36,6 +36,8 @@ struct Dimension {
 	constexpr Dimension operator+(const Dimension& d) const;
 
 	constexpr Dimension operator-(const Dimension& d) const;
+
+	constexpr void swap_values() { int tmp = height; height = width; width = tmp; }
 };
 
 std::ostream& operator<<(std::ostream&, const Dimension&);
