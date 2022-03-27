@@ -215,6 +215,11 @@ inline void Day::init(const Zeit::OTime* ptr)
    monat = ptr->getMonth();
 }
 
+void Day::setValues(int d, int m, int j)
+{
+   tz = d;
+   monat = Month(m, j);
+}
 
 /* private, nicht sichtbare Funktion! *
  * size(buf) muß >= 3 !!!             */
@@ -284,11 +289,25 @@ Day::Day(size_t t, size_t m, size_t j) : monat(m, j), tz(t) {}
 Day::Day(size_t tt, const Month& m) : monat(m), tz(tt) {}
 
 
+Day::Day(const Day& d)
+{
+   tz = d.tz;
+   monat = d.monat;
+}
+
+
 OTime Day::getTime() const
 {
    return OTime(tz, monat.mm(), monat.year().jj());
 }
 
+
+Day& Day::operator=(const Day& d)
+{
+   tz = d.tz;
+   monat = d.monat;
+   return *this;
+}
 
 Day& Day::operator++()
 {
@@ -348,7 +367,7 @@ Day Day::deltaDays(int i)
 
 Day::operator bool() const
 {
-   return monat && (tt() <= monat.days());
+   return monat && (tt() > 0) && (tt() <= monat.days());
 }
 
 
@@ -357,13 +376,16 @@ ostream& operator<<(ostream& os, const Day& td)
    /* Verhindere, daß Jahreszahlen mit
       Tausenderseparatoren angezeigt werden: */
    locale old = os.imbue(locale::classic()); /* = locale("C") */
-   for (int i : {td.tt(), td.mm()}) {
+   for (int i : {
+            td.tt(), td.mm()
+         }) {
       if (i < 10) os.put('0');
       os << i << '.';
    }
    if (td.jj() == 0) {
       os << "0000";
-   } else {
+   }
+   else {
       os << td.jj();
    }
    os.imbue(old);

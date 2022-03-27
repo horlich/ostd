@@ -136,11 +136,7 @@ private:
    inline void parse(std::istream&, const Zeit::OTime*); // validiert nicht!
 
 protected:
-   virtual void setValues(int d, int m, int j)
-   {
-      tz = d;
-      monat = Month(m, j);
-   }
+   virtual void setValues(int d, int m, int j);
 
 public:
    Day(); /* erzeugt 00.00.0000 */
@@ -155,6 +151,8 @@ public:
 
    // validiert nicht!
    Day(size_t tt, const Month& = Month());
+
+   Day(const Day& d);
 
    virtual ~Day() = default;
 
@@ -177,11 +175,13 @@ public:
 
    inline const Month& getMonth() { return monat; }
 
-   std::string toString() const;
+   virtual std::string toString() const;
 
    std::string toSQL() const;
 
    Day deltaDays(int i);
+
+   Day& operator=(const Day&);
 
    /* Enthält gültigen Datumswert? */
    operator bool() const;
@@ -210,18 +210,23 @@ Day today();
 
 class SQLDay : public Day {
 public:
-//	SQLDay() : Day(0,0,0) {} // Erzeugt einen ungültigen Wert!
-   SQLDay() = default;
+
 
    /* Argument muß strikt im SQL-Format
     * sein, sonst verhält sich das Programm
     * undefiniert! */
    SQLDay(std::string sql);
 
+   SQLDay() : Day() {}
+
+   SQLDay(const Day& d) : Day(d) {}
+
    virtual ~SQLDay() = default;
 
    using Day::setValues;
    virtual void setValues(const std::string& sql);
+
+   std::string toString() const override { return toSQL(); }
 };
 
 

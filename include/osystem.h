@@ -167,7 +167,7 @@ namespace Daemon {
                                        sysconf(_SC_OPEN_MAX) is indeterminate */
 } // namespace Daemon
 
-int becomeDaemon(int flags);
+int becomeDaemon(int flags = 0);
 
 
 
