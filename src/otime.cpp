@@ -162,6 +162,44 @@ Month Month::operator--(int)
    return tmp;
 }
 
+bool Month::operator==(const Month& m)
+{
+   if (jahr != m.jahr) return false;
+   return mz == m.mz;
+}
+
+bool Month::operator>(const Month& m)
+{
+   if (jahr == m.jahr) {
+      return mz > m.mz;
+   }
+   return jahr > m.jahr;
+}
+
+bool Month::operator>=(const Month& m)
+{
+   if (jahr == m.jahr) {
+      return mz >= m.mz;
+   }
+   return jahr >= m.jahr;
+}
+
+bool Month::operator<(const Month& m)
+{
+   if (jahr == m.jahr) {
+      return mz < m.mz;
+   }
+   return jahr < m.jahr;
+}
+
+bool Month::operator<=(const Month& m)
+{
+   if (jahr == m.jahr) {
+      return mz <= m.mz;
+   }
+   return jahr <= m.jahr;
+}
+
 
 
 std::string Month::name() const
@@ -296,6 +334,17 @@ Day::Day(const Day& d)
 }
 
 
+Day& Day::parseSQL(const std::string& sql)
+{
+   int y = stoi(sql.substr(0,4));
+   int m = stoi(sql.substr(5,2));
+   int d = stoi(sql.substr(8,2));
+   setValues(d,m,y);
+   return *this;
+}
+
+
+
 OTime Day::getTime() const
 {
    return OTime(tz, monat.mm(), monat.year().jj());
@@ -341,6 +390,43 @@ Day Day::operator--(int)
    return tmp;
 }
 
+bool Day::operator==(const Day& d)
+{
+   if (monat != d.monat) return false;
+   return tz == d.tz;
+}
+
+bool Day::operator>(const Day& d)
+{
+   if (monat == d.monat) {
+      return tz > d.tz;
+   }
+   return monat > d.monat;
+}
+
+bool Day::operator>=(const Day& d)
+{
+   if (monat == d.monat) {
+      return tz >= d.tz;
+   }
+   return monat >= d.monat;
+}
+
+bool Day::operator<(const Day& d)
+{
+   if (monat == d.monat) {
+      return tz < d.tz;
+   }
+   return monat < d.monat;
+}
+
+bool Day::operator<=(const Day& d)
+{
+   if (monat == d.monat) {
+      return tz <= d.tz;
+   }
+   return monat <= d.monat;
+}
 
 string Day::toString() const
 {
@@ -348,7 +434,6 @@ string Day::toString() const
    sprintf(buf, "%02d.%02d.%04d", static_cast<int>(tz), monat.mm(), monat.year().jj());
    return buf;
 }
-
 
 
 std::string Day::toSQL() const
@@ -402,19 +487,11 @@ std::istream& operator>>(std::istream& is, Day& td)
 
 
 
-SQLDay::SQLDay(std::string sql)
-{
-   setValues(sql);
-}
+//SQLDay::SQLDay(std::string sql)
+//{
+//   setValues(sql);
+//}
 
-
-void SQLDay::setValues(const std::string& sql)
-{
-   int y = stoi(sql.substr(0,4));
-   int m = stoi(sql.substr(5,2));
-   int d = stoi(sql.substr(8,2));
-   setValues(d,m,y);
-}
 
 
 
@@ -436,7 +513,7 @@ OTime::OTime()
 
 }
 
-OTime::OTime(const char* timestr, const char* format)
+OTime::OTime(const char* timestr, Fmt format)
 {
    // Siehe dazu man strptime...
    strptime(timestr, format, &localTime);

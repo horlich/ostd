@@ -150,7 +150,7 @@ public:
 	// Unterklassen, die den Wert definieren, setzen setValid(true):
 	virtual void setVal(int) { validVal = false; }
 
-	virtual void setVal(double d) { validVal = false; }
+        virtual void setVal(double) { validVal = false; }
 };
 
 

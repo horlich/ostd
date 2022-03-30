@@ -49,6 +49,8 @@ public:
       return Zeit::istSchaltjahr(jz);
    }
 
+   inline bool isNull() const { return jz == 0; }
+
    Year& operator()(size_t zahl);
 
    Year& operator=(const Year& j);
@@ -63,6 +65,16 @@ public:
    constexpr Year& operator--();   /* Präfix-Inkrementor */
 
    Year operator--(int);   /* Postfix-Inkrementor */
+
+   bool operator==(const Year& y) { return jz == y.jz; }
+
+   bool operator>(const Year& y) { return jz > y.jz; }
+
+   bool operator<(const Year& y) { return jz < y.jz; }
+
+   bool operator>=(const Year& y) { return jz >= y.jz; }
+
+   bool operator<=(const Year& y) { return jz <= y.jz; }
 };
 
 
@@ -97,6 +109,16 @@ public:
 
    Month operator--(int);
 
+   bool operator==(const Month& m);
+
+   bool operator>(const Month& m);
+
+   bool operator>=(const Month& m);
+
+   bool operator<(const Month& m);
+
+   bool operator<=(const Month& m);
+
    inline int mm() const
    {
       return mz;
@@ -112,6 +134,10 @@ public:
    inline const Year& year() const
    {
       return jahr;
+   }
+
+   inline bool isNull() {
+      return (jahr.isNull() && (mz == 0));
    }
 
    // Anzahl Tage dieses Monats:
@@ -156,6 +182,8 @@ public:
 
    virtual ~Day() = default;
 
+   Day& parseSQL(const std::string& sql);
+
    OTime getTime() const;
 
    inline int tt() const
@@ -174,6 +202,8 @@ public:
    }
 
    inline const Month& getMonth() { return monat; }
+
+   inline bool isNull() { return monat.isNull() && (tz == 0); }
 
    virtual std::string toString() const;
 
@@ -194,6 +224,16 @@ public:
 
    Day operator--(int);
 
+   bool operator==(const Day& d);
+
+   bool operator>(const Day& d);
+
+   bool operator>=(const Day& d);
+
+   bool operator<(const Day& d);
+
+   bool operator<=(const Day& d);
+
    friend std::istream& operator>>(std::istream& is, Day& td);
 };
 
@@ -208,30 +248,8 @@ Day today();
 
 
 
-class SQLDay : public Day {
-public:
 
-
-   /* Argument muß strikt im SQL-Format
-    * sein, sonst verhält sich das Programm
-    * undefiniert! */
-   SQLDay(std::string sql);
-
-   SQLDay() : Day() {}
-
-   SQLDay(const Day& d) : Day(d) {}
-
-   virtual ~SQLDay() = default;
-
-   using Day::setValues;
-   virtual void setValues(const std::string& sql);
-
-   std::string toString() const override { return toSQL(); }
-};
-
-
-
-using fmt = const char*;
+using Fmt = const char*;
 
 
 class OTime {
@@ -245,14 +263,14 @@ class OTime {
 
 public:
    /* Definierte Formatstrings für formatiere(): */
-   static constexpr const char* FMT_DATE_10  = "%d.%m.%Y";
-   static constexpr const char* FMT_NOW_19   = "%d.%m.%Y %H:%M:%S";
-   static constexpr const char* FMT_NOW_8    = "%H:%M:%S";
-   static constexpr const char* FMT_TMSTP_84 = "%Y%m%d.%H%M"; // Timestamp mit Format 8.4
+   static constexpr Fmt FMT_DATE_10  = "%d.%m.%Y";
+   static constexpr Fmt FMT_NOW_19   = "%d.%m.%Y %H:%M:%S";
+   static constexpr Fmt FMT_NOW_8    = "%H:%M:%S";
+   static constexpr Fmt FMT_TMSTP_84 = "%Y%m%d.%H%M"; // Timestamp mit Format 8.4
 
    OTime();
 
-   OTime(const char* timestr, const char* format);
+   OTime(const char* timestr, Fmt format);
 
    OTime(int tag, int monat, int jahr);
 
