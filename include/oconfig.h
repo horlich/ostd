@@ -11,6 +11,9 @@
 //#include <bitset>
 #include <map>
 #include <unistd.h>
+#include <fstream>
+#include <sstream>
+#include <filesystem>
 //#include <stdexcept>
 
 #include "oexception.h"
@@ -18,42 +21,36 @@
 #include "ostringutil.h"
 
 
-namespace Property {
-
+namespace Config {
 
 
 class ConfigSyntaxException : public OException::ParseException {
 private:
-	int lineNr;
+    int lineNr;
 public:
-	ConfigSyntaxException(int line, const std::string& mess) :
-		ParseException(mess), lineNr(line){}
+    ConfigSyntaxException(int line, const std::string& mess) :
+        ParseException(mess), lineNr(line) {}
 };
 
 
+struct ConfigMissingKey : public OException::ParseException {
+    ConfigMissingKey(const std::string& message) : ParseException(message) {}
 
-
-class SimpleConfigDatei {
-	/*
-	 *    Enthält Key-Wert-Paare, die durch das erste in der Zeile
-	 *    vorkommende '=' getrennt sind.
-	 *    Auskommentieren mit '#'.
-	 *
-	 * */
-private:
-	std::map<std::string, std::string> wertehash;
-	const char* path;
-public:
-	SimpleConfigDatei(const char* _path) : path{_path} {};
-
-	void readMe();
-
-	std::string getVal(const std::string& key);
-
-	std::string getVal(const char* key) { return getVal(std::string(key)); }
+    static std::string missingKey(const std::string& keyname) {
+        std::stringstream buf;
+        buf << "Fehlerhafte Config-Datei: Key '" << keyname << "' nicht gefunden";
+        return buf.str();
+    }
 };
 
+using ConfigMap = std::map<std::string, std::string>;
 
-}; // namespace Property
+/* Syntax der Config-Dateien: '[key]=[value]\n'
+   Leerzeilen oder Zeilen, die mit '#' beginnen,
+   werden ignoriert: */
+ConfigMap readConfig(const std::filesystem::path& file);
+
+
+}; // namespace Config
 
 #endif /* OCONFIG_H_ */

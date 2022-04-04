@@ -12,60 +12,35 @@ using namespace std;
 
 
 
-namespace Property {
+namespace Config {
 
 
-constexpr char KEY_CONFIGFILE_READ[] = "key_configfile_read";
 
-void SimpleConfigDatei::readMe() {
-	ifstream is(path);
-	bool isComment = false;
-	if (! is.is_open())
-		throw OFile::CannotOpen(path);
-	char c;
-	int lineNr = 1;
-	string buf;
-	buf.reserve(300);
-	wertehash.clear();
-	wertehash[KEY_CONFIGFILE_READ] = string("true");
-	while (is.good()) {
-		c = is.get();
-		if (c == '\n') {
-			// buf auswerten...
-			if (! buf.empty()) {
-				size_t trennPos = buf.find('=');
-				if (trennPos == string::npos)
-					throw ConfigSyntaxException(lineNr, "Trennzeichen fehlt");
-				string key(StringUtil::rtrim(buf.substr(0, trennPos)));
-				string val(StringUtil::trim(buf.substr(trennPos+1)));
-				wertehash[key] = val;
-			}
-			isComment = false;
-			lineNr++;
-			buf.clear();
-		}
-		if (buf.empty() && isspace(c)) continue;
-		if (isComment) continue;
-		if (c == '#') {
-			isComment = true;
-		} else buf.append(sizeof(c), c);
-	}
-	is.close();
+ConfigMap readConfig(const std::filesystem::path& file)
+{
+    if (! std::filesystem::exists(file))
+        throw OFile::FileNotFound(OFile::FileNotFound::notFound(file.string()));
+    ConfigMap map;
+    static constexpr int bufsiz {300};
+    char buf[bufsiz];
+    std::ifstream is(file);
+    int lnr = 0;
+    while (is.getline(buf, bufsiz)) {
+        ++lnr;
+        std::string line(buf);
+        if (line.empty() || (line[0] == '#')) continue;
+        int pos = line.find('=');
+        if (pos == std::string::npos)
+            throw ConfigSyntaxException(lnr, "Formatfehler");
+        std::string key = line.substr(0, pos);
+        std::string value = line.substr(++pos);
+        map[key] = value;
+    }
+//    for (auto pair : map)
+//        std::cout << "Key=" << pair.first << ", Value=" << pair.second << '\n';
+    return map;
 }
 
 
-
-string SimpleConfigDatei::getVal(const string& key) {
-	try {
-		if (! wertehash.count(KEY_CONFIGFILE_READ)) {
-			readMe();
-			return getVal(key);
-		}
-		return string(wertehash.at(key));
-	} catch (out_of_range& e) { // Key existiert nicht
-		return string();
-	}
-}
-
-}; // namespace Property
+}; // namespace Config
 
