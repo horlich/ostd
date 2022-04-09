@@ -15,6 +15,21 @@ using namespace std;
 namespace Config {
 
 
+ConfigSyntaxException::ConfigSyntaxException(int line, const std::string& mess)
+    : ParseException(mess), lineNr(line) {}
+
+
+ConfigMissingKey::ConfigMissingKey(const std::string& message)
+    : ParseException(message) {}
+
+
+std::string ConfigMissingKey::missingKey(const std::string& keyname)
+{
+    std::stringstream buf;
+    buf << "Fehlerhafte Config-Datei: Key '" << keyname << "' nicht gefunden";
+    return buf.str();
+}
+
 
 ConfigMap readConfig(const std::filesystem::path& file)
 {

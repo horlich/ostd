@@ -13,5 +13,11 @@ namespace Memory {
 
 
 
+
+
+/*-----------------------/ Mapping /----------------------------*/
+
+
+
 }; // Ende Namespace Memory
 

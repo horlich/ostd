@@ -28,20 +28,16 @@ class ConfigSyntaxException : public OException::ParseException {
 private:
     int lineNr;
 public:
-    ConfigSyntaxException(int line, const std::string& mess) :
-        ParseException(mess), lineNr(line) {}
+    ConfigSyntaxException(int line, const std::string& mess);
 };
 
 
 struct ConfigMissingKey : public OException::ParseException {
-    ConfigMissingKey(const std::string& message) : ParseException(message) {}
+    ConfigMissingKey(const std::string& message);
 
-    static std::string missingKey(const std::string& keyname) {
-        std::stringstream buf;
-        buf << "Fehlerhafte Config-Datei: Key '" << keyname << "' nicht gefunden";
-        return buf.str();
-    }
+    static std::string missingKey(const std::string& keyname);
 };
+
 
 using ConfigMap = std::map<std::string, std::string>;
 

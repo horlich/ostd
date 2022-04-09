@@ -19,29 +19,27 @@ namespace OException {
 
 
 
-
-
-std::string envNameMess(const char* funcname, const std::string& message);
-
-
 class Fehler : public std::exception {
-	/* Oberste (Default-) Klasse von OException */
+    /* Oberste (Default-) Klasse von OException */
 private:
-	std::string message;
+    std::string message;
 
 protected:
-	void setMessage(const std::string& mess) { message = mess; }
+    void setMessage(const std::string& mess)
+    {
+        message = mess;
+    }
 
-	Fehler() : message("Undefinierter Fehler") {}
+    Fehler() : message("Undefinierter Fehler") {}
 
 public:
-	Fehler(const std::string& mess);
+    Fehler(const std::string& mess);
 
-	Fehler (const char* funcname, const std::string& message);
+    Fehler (const char* funcname, const std::string& message);
 
-	virtual ~Fehler() = default;
+    virtual ~Fehler() = default;
 
-	virtual const char* what() const noexcept override ;
+    virtual const char* what() const noexcept override ;
 };
 
 
@@ -52,72 +50,76 @@ public:
 
 class ParseException : public Fehler {
 public:
-	ParseException(const std::string& message) :
-		Fehler(message) {}
+    ParseException(const std::string& message) :
+        Fehler(message) {}
 
-	virtual ~ParseException() = default;
+    virtual ~ParseException() = default;
 };
 
 
 class NullPointerException : public Fehler {
 public:
-	NullPointerException(const std::string& message) :
-		Fehler(message) {}
+    NullPointerException(const std::string& message) :
+        Fehler(message) {}
 
-	NullPointerException (const char* funcname, const std::string& message);
+    NullPointerException (const char* funcname, const std::string& message);
 
-	virtual ~NullPointerException() = default;
+    virtual ~NullPointerException() = default;
 };
 
 
 class IllegalArgumentException : public Fehler {
 public:
-	IllegalArgumentException(const std::string& message) :
-		Fehler(message) {}
+    IllegalArgumentException(const std::string& message) :
+        Fehler(message) {}
 
-	virtual ~IllegalArgumentException() = default;
+    virtual ~IllegalArgumentException() = default;
 };
 
 
 class IllegalOperationException : public Fehler {
 public:
-	IllegalOperationException(const std::string& message) :
-		Fehler(message) {}
+    IllegalOperationException(const std::string& message) :
+        Fehler(message) {}
 
-	virtual ~IllegalOperationException() = default;
+    virtual ~IllegalOperationException() = default;
 };
 
 
 class OperationFailedException : public Fehler {
 public:
-	OperationFailedException(const std::string& message) :
-		Fehler(message) {}
+    OperationFailedException(const std::string& message) :
+        Fehler(message) {}
 
-	virtual ~OperationFailedException() = default;
+    virtual ~OperationFailedException() = default;
 };
 
 
 class IndexOutOfBoundsException : public Fehler {
 public:
-	IndexOutOfBoundsException(const std::string& message) :
-		Fehler(message) {}
+    IndexOutOfBoundsException(const std::string& message) :
+        Fehler(message) {}
 
-	IndexOutOfBoundsException(const char* funcname, const std::string& message);
+    IndexOutOfBoundsException(const char* funcname, const std::string& message);
 
-	virtual ~IndexOutOfBoundsException() = default;
+    virtual ~IndexOutOfBoundsException() = default;
 };
 
 
 class BadCast : public Fehler {
 public:
-	BadCast(const std::string& message) :
-		Fehler(message) {}
+    BadCast(const std::string& message) :
+        Fehler(message) {}
 
-	BadCast(const char* funcname, const std::string& message);
+    BadCast(const char* funcname, const std::string& message);
 
-	virtual ~BadCast() = default;
+    virtual ~BadCast() = default;
 };
 
+
+struct CommandFailed : public Fehler {
+    CommandFailed(const std::string& command);
+};
 
 
 } // Ende namespace OException
