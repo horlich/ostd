@@ -130,34 +130,35 @@ T Objektspeicher<T>::recall() const
 
 template<typename T>
 MappedWriter<T>::MappedWriter(size_t sz, int offset_pages)
-    : size(sz), offset(offset_pages * sysconf(_SC_PAGESIZE))
+    : array_size(sz), offset(offset_pages * sysconf(_SC_PAGESIZE))
 {
-    if (size <= 0)
-        throw OException::IllegalArgumentException("Ungültiger Wert für size");
+    if (array_size <= 0)
+        throw OException::IllegalArgumentException("Ungültiger Wert für array_size");
 }
 
 
 template<typename T>
 void MappedWriter<T>::set_address(int fd)
 {
+    size_t byte_size = array_size * sizeof(T);
     /* Speicherplatz zur Verfügung stellen, sonst Bus-Error: */
-    off_t filesize = offset + (size*sizeof(T));
+    off_t filesize = offset + byte_size;
     if (ftruncate(fd, filesize) == -1)
         throw OException::CommandFailed("ftruncate");
-    address = static_cast<T*>(mmap(NULL, size*sizeof(T), PROT_WRITE, MAP_SHARED, fd, offset));
+    address = static_cast<T*>(mmap(NULL, byte_size, PROT_WRITE, MAP_SHARED, fd, offset));
     if (address == MAP_FAILED) {
         std::stringstream buf;
         buf << "Mapping (Writer) mißlungen: " << strerror(errno);
         throw OException::Fehler(buf.str());
     }
-    close(fd);
+    close(fd); // wird nicht mehr gebraucht
 }
 
 
 template<typename T>
 MappedWriter<T>::~MappedWriter()
 {
-    if (munmap(address, size*sizeof(T)) != 0)
+    if (munmap(address, array_size*sizeof(T)) != 0)
         std::cerr << "Writer: munmap() mißlungen!";
 }
 
@@ -165,10 +166,10 @@ MappedWriter<T>::~MappedWriter()
 template<typename T>
 T* MappedWriter<T>::writeArray(const T* source, size_t anzahl)
 {
-    if (anzahl > size)
+    if (anzahl > array_size)
         throw OException::IndexOutOfBoundsException("Speicherplatz zu klein für Array");
-    int bytes = anzahl * sizeof(T);
-    void* v = memcpy(address, source, bytes);
+    size_t byte_size = anzahl * sizeof(T);
+    void* v = memcpy(address, source, byte_size);
     return static_cast<T*>(v);
 }
 
@@ -178,8 +179,8 @@ T* MappedWriter<T>::writeArray(const T* source, size_t anzahl)
 
 
 template <typename T>
-MappedFileWriter<T>::MappedFileWriter(const std::string& path, size_t size, int offset_pages)
-    : MappedWriter<T>(size, offset_pages)
+MappedFileWriter<T>::MappedFileWriter(const std::string& path, size_t array_size, int offset_pages)
+    : MappedWriter<T>(array_size, offset_pages)
 {
     if (path.empty())
         throw OException::IllegalArgumentException("Leeren Pfadnamen übergeben");
@@ -195,8 +196,8 @@ MappedFileWriter<T>::MappedFileWriter(const std::string& path, size_t size, int 
 
 
 template<typename T>
-PosixShmWriter<T>::PosixShmWriter(const std::string& name_, size_t size, int offset_pages)
-    : MappedWriter<T>(size, offset_pages), name(name_)
+PosixShmWriter<T>::PosixShmWriter(const std::string& name_, size_t array_size, int offset_pages)
+    : MappedWriter<T>(array_size, offset_pages), name(name_)
 {
     if ( name.empty() || (name[0] != '/') )
         throw OException::IllegalArgumentException("Name muß mit einem Slash (/) beginnen");
@@ -220,21 +221,21 @@ void MappedReader<T>::set_address(int fd)
     int filesize = sb.st_size;
     if ((filesize % sizeof(T)) > 0)
         throw OException::Fehler("Datei enthält keinen passenden Typ");
-    size = filesize / sizeof(T);
+    array_size = filesize / sizeof(T);
     address = static_cast<T*>(mmap(NULL, filesize, PROT_READ, MAP_SHARED, fd, offset));
     if (address == MAP_FAILED) {
         std::stringstream buf;
         buf << "Mapping (Reader) mißlungen: " << strerror(errno);
         throw OException::Fehler(buf.str());
     }
-    close(fd);
+    close(fd); // wird nicht mehr gebraucht
 }
 
 
 template<typename T>
 MappedReader<T>::~MappedReader()
 {
-    if (munmap(address, size*sizeof(T)) != 0)
+    if (munmap(address, array_size*sizeof(T)) != 0)
         std::cerr << "Reader: munmap() mißlungen!";
 }
 

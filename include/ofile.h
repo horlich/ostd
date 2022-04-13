@@ -8,24 +8,11 @@
 #ifndef OFILE_H_
 #define OFILE_H_
 
-//#include <string>
-//#include <vector>
-//#include <string.h>
 #include <algorithm>
 #include <filesystem>
-//#include <sys/stat.h>
-//#include <sys/types.h>
-//#include <fcntl.h>
-//#include <dirent.h>
-//#include <errno.h>
-//#include <unistd.h>
-//#include <fstream>
-//#include <iostream>
-//#include <sstream>
-//#include <ios>
-//#include <ctype.h>
-//#include <stdexcept>
 #include <ftw.h>
+#include <sys/socket.h>
+#include <sys/un.h>
 
 #include "oexception.h"
 #include "ostringutil.h"
@@ -39,64 +26,7 @@ namespace OFile {
 
 
 
-
-
-
-/*
- *                     Path:
- *
- * */
-
- /* ACHTUNG: Seit C++17 gibt es die Filesystem Library
-  * Header <filesystem>
-  * https://en.cppreference.com/w/cpp/filesystem
-  * So auch: std::filesystem::path !!               */
-
-class Path : protected std::vector<std::string> {
-	//
-private:
-	bool isAbs = false; // leading '/'?
-	/* Wichtig: Bei Objektänderungen muß pathname_cached
-	 * GELÖSCHT werden! */
-	mutable std::string pathname_cached;
-	/* throws InvalidPathname: */
-	inline void parseFirstArg(const std::string& pathname);
-	/* throws InvalidPathname: */
-	inline void parseBasename(const std::string& basename);
-
-public:
-	/* throws InvalidPathname: */
-	Path(const std::string& pathname = OConsole::getWorkingDirectory());
-
-	/* throws InvalidPathname: */
-	Path(const std::string& dirname, const std::string& basename);
-
-	/* throws InvalidPathname: */
-	Path(const Path& parent, const std::string& basename);
-
-	Path(Path::const_iterator first, Path::const_iterator last, bool isAbsolute);
-
-	bool isRoot() const { return (empty());	}
-
-	bool isAbsolute() const { return isAbs; }
-
-	std::ostream& print(std::ostream& os) const;
-
-	std::string toString() const;
-
-	Path getParent() const;
-
-	std::string getBasename() const;
-};
-
-
-std::ostream& operator<<(std::ostream&, const Path&);
-
-
-
-
-
-
+using FDesc = int; /* Filedescriptor */
 
 
 /***************************| stat |*****************************/
@@ -162,8 +92,46 @@ std::ostream& operator<<(std::ostream& os, const GetSize& sz);
 
 /* Dateien-Tests für Existenz und Rechte mit faccessat() in 'man access(2)' */
 
-/* throws CannotRead: */
-int getFileSize(std::ifstream* is);
+
+
+
+/*-----------------------/ Unix Domain Socket: /----------------------------------*/
+
+class UDSocket {
+    //
+protected:
+    FDesc init_fd = 0;
+    struct sockaddr_un address;
+    static constexpr size_t addr_size = sizeof(struct sockaddr_un);
+    std::string sock_path;
+
+    UDSocket(const std::string& path);
+
+    virtual ~UDSocket() = default;
+}; // class UDSocket
+
+
+class UDSocketServer : public UDSocket {
+    //
+public:
+    UDSocketServer(const std::string& path);
+
+    FDesc accept();
+
+    virtual ~UDSocketServer();
+
+}; // class UDSocketServer
+
+
+class UDSocketClient : public UDSocket {
+    //
+public:
+    UDSocketClient(const std::string& path);
+
+    FDesc connect();
+
+}; // class UDSocketClient
+
 
 
 
@@ -214,7 +182,6 @@ public:
 };
 
 
-
 class CannotRead : public FileAccessException {
 public:
 	CannotRead(const std::string& what);
@@ -224,6 +191,15 @@ public:
 	static std::string notRead(const std::string& path);
 };
 
+
+class CannotCreate : public FileAccessException {
+public:
+	CannotCreate(const std::string& what);
+
+	virtual ~CannotCreate() = default;
+
+	static std::string notCreate(const std::string& path);
+};
 
 
 class NotaDirectory : public FileAccessException {

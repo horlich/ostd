@@ -22,116 +22,6 @@ namespace OFile {
 
 
 
-
-/*
- *
- *                         P A T H :
- *
- * */
-
-bool _haslrwsp(const std::string& str)
-{
-   if (str.empty()) return false;
-   if (isspace(str.front()) || isspace(str.back())) return true;
-   return false;
-}
-
-
-void Path::parseFirstArg(const std::string& pathname)
-{
-   if (pathname.empty()) throw InvalidPathname("Leerstring als Pfadname");
-   if ((pathname.size() == 1) && (pathname.at(0) == '/')) return;
-   std::vector<std::string> vec;
-   StringUtil::split(pathname, '/', vec);
-   if (any_of(vec.begin(), vec.end(), _haslrwsp))
-      throw InvalidPathname("Unerlaubtes Leerzeichen in Pfadnamen.");
-   if (vec.at(0).empty()) isAbs = true; /* Absoluter Pfadname */
-   for (auto it = vec.begin(); it != vec.end(); it++) {
-      /* Doppelte Slashes und End-Slashes werden ignoriert. */
-      if (! it->empty()) push_back(*it);
-   }
-}
-
-
-void Path::parseBasename(const std::string& basename)
-{
-   if (basename.empty()) throw InvalidPathname("Leerstring als Basename");
-   /* basename darf keinen Slash enthalten: */
-   if (basename.find_first_of('/') != string::npos)
-      throw InvalidPathname("Ungültiger Basename '" + basename + "'");
-   if (_haslrwsp(basename))
-      throw InvalidPathname("Pfadname mit unerlaubten Leerzeichen");
-   push_back(basename);
-}
-
-
-Path::Path(const std::string& pathname)
-{
-   parseFirstArg(pathname);
-}
-
-
-Path::Path(const std::string& dirname, const std::string& basename)
-{
-   parseFirstArg(dirname);
-   parseBasename(basename);
-}
-
-
-Path::Path(const Path& parent, const std::string& basename)
-{
-   insert(cbegin(), parent.cbegin(), parent.cend());
-   isAbs = parent.isAbs;
-   parseBasename(basename);
-}
-
-
-Path::Path(Path::const_iterator first, Path::const_iterator last, bool isAbsolute) :
-   std::vector<std::string>(first, last), isAbs(isAbsolute) {}
-
-std::ostream& Path::print(std::ostream& os) const
-{
-   if (isAbsolute()) os.put('/');
-   int i = 0;
-   for (auto it = begin(); it != end(); it++) {
-      if (i++ > 0) os.put('/');
-      os << *it;
-   }
-   return os;
-}
-
-std::string Path::toString() const
-{
-   if (! pathname_cached.empty()) return pathname_cached;
-   std::stringstream buf;
-   print(buf);
-   pathname_cached = buf.str();
-   return toString();
-}
-
-Path Path::getParent() const
-{
-   if (isRoot()) return Path("/");
-   Path ret(cbegin(), (cend()-1), isAbsolute());
-   return ret;
-}
-
-
-std::string Path::getBasename() const
-{
-   if (isRoot()) return std::string();
-   return back();
-}
-
-
-std::ostream& operator<<(std::ostream& os, const Path& p)
-{
-   p.print(os);
-   return os;
-}
-
-
-
 /*-----------------------/ GetSize: /------------------------*/
 
 
@@ -182,6 +72,70 @@ std::ostream& operator<<(std::ostream& os, const GetSize& sz)
 
 
 
+/*------------------------/ Unix Domain Socket /---------------------------------*/
+
+
+    UDSocket::UDSocket(const std::string& path) : sock_path(path)
+    {
+        if (std::filesystem::exists(path)) {
+            std::stringstream buf;
+            buf << "Datei '" << path << "' existiert schon";
+            throw OFile::CannotCreate(buf.str());
+        }
+        init_fd = socket(AF_UNIX, SOCK_STREAM, 0);
+        if (init_fd == -1)
+            throw OException::CommandFailed("socket");
+        size_t maxlen = sizeof(address.sun_path) - 1;
+        if (path.size() > maxlen) {
+            std::stringstream buf;
+            buf << "Adresse länger als maxlen=" << maxlen;
+            throw OException::IllegalArgumentException(buf.str());
+        }
+        memset(&address, 0, addr_size); /* address mit Nullen überschreiben */
+        address.sun_family = AF_UNIX;
+        strncpy(address.sun_path, path.data(), maxlen);
+    }
+
+
+
+    UDSocketServer::UDSocketServer(const std::string& path) : UDSocket(path)
+    {
+        if (bind(init_fd, (struct sockaddr*)&address, addr_size) == -1)
+            throw OException::CommandFailed("bind");
+        static constexpr int backlog = 5;
+        if (listen(init_fd, backlog) == -1)
+            throw OException::CommandFailed("listen");
+    }
+
+
+    FDesc UDSocketServer::accept()
+    {
+        FDesc fd = ::accept(init_fd, nullptr, nullptr);
+        if (fd == -1)
+            throw OException::CommandFailed("accept");
+        return fd;
+    }
+
+
+    UDSocketServer::~UDSocketServer() {
+        if (! fs::remove(sock_path)) {
+            std::cerr << "Socketdatei '" << sock_path << "' konnte nicht gelöscht werden";
+        }
+    }
+
+
+    UDSocketClient::UDSocketClient(const std::string& path) : UDSocket(path) {}
+
+
+
+    FDesc UDSocketClient::connect() {
+        if (::connect(init_fd, (struct sockaddr*)&address, addr_size) == -1)
+            throw OException::CommandFailed("connect");
+        return init_fd;
+    }
+
+
+
 
 
 /*
@@ -219,6 +173,8 @@ std::string CannotRead::notRead(const std::string& path)
    return "Kann Datei '" + path + "' nicht lesen.";
 }
 
+
+CannotCreate::CannotCreate(const std::string& what) : FileAccessException(what) {}
 
 
 NotaDirectory::NotaDirectory(const std::string& what) : FileAccessException(what) {}
@@ -311,21 +267,6 @@ bool mkpath( const std::string& path, mode_t mode )
 }
 
 
-
-
-
-
-
-int getFileSize(ifstream* is)
-{
-   if (! is->is_open())
-      throw CannotRead("OFile::getFileSize: Geschlossener Stream");
-   streampos pos = is->tellg();
-   is->seekg (0, is->end);
-   int fileSize = is->tellg();
-   is->seekg (pos);
-   return fileSize;
-}
 
 
 

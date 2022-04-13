@@ -199,7 +199,7 @@ template<typename T>
 class MappedWriter {
     //
     T* address          = nullptr;
-    size_t size         = 0; /* = bytes/sizeof(T) */
+    size_t array_size   = 0; /* = bytes/sizeof(T) */
     off_t offset        = 0;
 
 protected:
@@ -207,7 +207,7 @@ protected:
 
     /* Zu den Argumenten siehe mmap(2)
        offset_pages ist das Offset in Page-Einheiten (á 4096 bytes) */
-    MappedWriter(size_t size, int offset_pages);
+    MappedWriter(size_t array_size, int offset_pages);
 
 public:
     virtual ~MappedWriter();
@@ -229,7 +229,7 @@ class MappedFileWriter : public MappedWriter<T> {
 public:
     /* Zu den Argumenten siehe mmap(2)
        offset_pages ist das Offset in Page-Einheiten (á 4096 bytes) */
-    MappedFileWriter(const std::string& path, size_t size, int offset_pages = 0);
+    MappedFileWriter(const std::string& path, size_t array_size, int offset_pages = 0);
 
     virtual ~MappedFileWriter() = default;
 
@@ -248,7 +248,7 @@ public:
     /* Die erzeugte Datei kann mit 'ls /dev/shm' angezeigt werden.
        ACHTUNG: Datei existiert nur im Hauptspeicher wird deshalb
        bei einem Reboot gelöscht! */
-    PosixShmWriter(const std::string& name, size_t size, int offset_pages = 0);
+    PosixShmWriter(const std::string& name, size_t array_size, int offset_pages = 0);
 
     virtual ~PosixShmWriter() = default;
 
@@ -263,9 +263,9 @@ public:
 template<typename T>
 class MappedReader {
     //
-    T* address      = nullptr;
-    size_t size     = 0; /* bytes/sizeof(T) */
-    off_t offset    = 0;
+    T* address          = nullptr;
+    size_t array_size   = 0; /* bytes/sizeof(T) */
+    off_t offset        = 0;
 
 protected:
     MappedReader(int offset_pages = 0)
@@ -275,10 +275,11 @@ protected:
 
 public:
     virtual ~MappedReader();
+    using iterator = T*;
 
-    T* begin() { return address; }
+    iterator begin() { return address; }
 
-    T* end() { return address + size; }
+    iterator end() { return address + array_size; }
 }; // class MappeReader
 
 
