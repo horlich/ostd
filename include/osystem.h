@@ -64,6 +64,7 @@ PwdEntry getUser(uid_t uid);
 PwdEntry getUser(const std::string& name);
 
 
+
 /*-----------------------/ MountedFsList: /-----------------------*/
 
 const std::array<std::string,4> FSYSTEMS { "ext4", "ext3", "vfat", "fuseblk" };
@@ -167,6 +168,7 @@ namespace Daemon {
                                        sysconf(_SC_OPEN_MAX) is indeterminate */
 } // namespace Daemon
 
+/* Gibt bei Erfolg 0 zurück, bei Fehler -1: */
 int becomeDaemon(int flags = 0);
 
 

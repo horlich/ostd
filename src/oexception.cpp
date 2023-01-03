@@ -17,9 +17,11 @@ std::string funcNameMess__(const char* funcname, const std::string& message) {
 	return buf.str();
 }
 
-std::string commandFailedMess__(const std::string& command) {
+std::string commandFailedMess__(const std::string& command, int error_no) {
     std::stringstream buf;
     buf << "Befehl '" << command << "' mißlungen";
+    if (error_no > 0)
+        buf << ": " << strerror(error_no);
     return buf.str();
 }
 
@@ -45,8 +47,8 @@ IndexOutOfBoundsException::IndexOutOfBoundsException(const char* funcname, const
 		Fehler(funcname, message) {}
 
 
-CommandFailed::CommandFailed(const std::string& command)
-        : Fehler(commandFailedMess__(command)) {}
+CommandFailed::CommandFailed(const std::string& command, int error_no)
+        : Fehler(commandFailedMess__(command, error_no)) {}
 
 
 ostream& operator<<(ostream& os, Fehler& e) {

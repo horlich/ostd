@@ -8,6 +8,8 @@
 #ifndef ONUMBER_H_
 #define ONUMBER_H_
 
+#include <random>
+
 namespace ONumber {
 
 /* Prüft, ob Zahl gerade oder ungerade ist: */
@@ -16,6 +18,21 @@ bool istGerade(long i);
 
 /* std::negate im Header <functional> ist viel schneller! */
 long negate(long l); /* l * -1 binär */
+
+
+class IntGenerator {
+//
+public:
+    IntGenerator(int low, int high);
+
+    int operator()();
+
+private:
+    std::mt19937_64 engine;
+    std::uniform_int_distribution<> dist;
+};
+
+
 
 } /* Ende Namespace ONumber */
 

@@ -303,7 +303,7 @@ void printSystemDaten(std::ostream& os)
 {
    struct utsname uts_info;
    uname(&uts_info);
-   os <<   "Maschine:        " << uts_info.machine
+   os <<   "Architektur:     " << uts_info.machine
       << "\nCPU-Kerne:       " << std::thread::hardware_concurrency()
       << "\nBetriebssystem:  " << uts_info.sysname
       << "\nVersion:         " << uts_info.version

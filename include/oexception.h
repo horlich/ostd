@@ -118,7 +118,10 @@ public:
 
 
 struct CommandFailed : public Fehler {
-    CommandFailed(const std::string& command);
+    /* Wenn die übergebene errno == 0, dann wird sie ignoriert */
+    CommandFailed(const std::string& command, int error_no = 0);
+
+    virtual ~CommandFailed() = default;
 };
 
 
