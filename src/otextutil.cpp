@@ -89,7 +89,8 @@ ItemLine::VisitResult ItemLine::visit(wchar_t ch) {
 	if (ch == '\t') {
 		textbuf.put(' ');
 	} else {
-		textbuf << ch;
+//      TODO: Reparieren:
+//		textbuf << ch; // Fehler, weil ch kein char, sondern wchar_t ist
 	}
 	if ((maxcols > 0) && (++buflen >= getMaxCols())) return VisitResult::BREAK;
 	return VisitResult::CONTINUE;

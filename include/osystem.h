@@ -182,6 +182,7 @@ void printSystemDaten(std::ostream& os = std::cout);
 
 /* Gibt den Speicherplatz der /home/... Directories aus: */
 void printUserSpace(std::ostream& os = std::cout);
+
 /* langsamere Variante mit fork() */
 void printUserSpaceFork(std::ostream& os = std::cout);
 
