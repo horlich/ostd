@@ -8,12 +8,10 @@ OColor::OColor(unsigned long rgb) : m_value(rgb)
 {
     if (rgb > 0xFFFFFF)
         throw range_error("OColor: Value must be in the range from 0 to 0xFFFFFF");
-    m_rgb_array = reinterpret_cast<unsigned char*>(&m_value);
 }
 
 OColor::OColor(unsigned char red, unsigned char green, unsigned char blue)
 {
-    m_rgb_array = reinterpret_cast<unsigned char*>(&m_value);
     m_rgb_array[2] = red;
     m_rgb_array[1] = green;
     m_rgb_array[0] = blue;
@@ -37,7 +35,6 @@ OColor::OColor(const std::string& rgb_code)
     if (! check_rgb_code__(rgb_code))
         throw  invalid_argument("malformated color string");
     m_value = stoul(rgb_code.substr(1), 0, 16);
-    m_rgb_array = reinterpret_cast<unsigned char*>(&m_value);
 }
 
 OColor OColor::complementary() const
