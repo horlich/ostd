@@ -37,8 +37,6 @@ private:
     unsigned char m_red   = 0;
     unsigned char m_green = 0;
     unsigned char m_blue  = 0;
-//    unsigned long m_value = 0;
-//    unsigned char* m_rgb_array = reinterpret_cast<unsigned char*>(&m_value);  // array index: red=2, green=1, blue=0
 };
 
 ostream& operator<<(ostream & os, const OColor& color);

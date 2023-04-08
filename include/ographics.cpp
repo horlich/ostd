@@ -55,20 +55,13 @@ unsigned long OColor::value() const
 string OColor::to_string() const {
     stringstream buf;
     buf.put('#');
-    buf << hex << setw(2) << setfill('0') << int(m_red);
-    buf << hex << setw(2) << setfill('0') << int(m_green);
-    buf << hex << setw(2) << setfill('0') << int(m_blue);
+    buf << hex << setw(6) << setfill('0') << value();
     return buf.str();
 }
 
 OColor OColor::complementary() const
 {
     return OColor(0xFF - m_red, 0xFF - m_green, 0xFF - m_blue);
-}
-
-unsigned char component_darker__(float intensity, float shade_factor)
-{
-    return std::lround(intensity * (1.0 - shade_factor));
 }
 
 
@@ -82,7 +75,7 @@ public:
     {
         if (_factor > 1.0)
             _factor = 1.0;
-        if (_factor < 0.0)
+        else if (_factor < 0.0)
             _factor = 0.0;
         factor = _factor;
     }
