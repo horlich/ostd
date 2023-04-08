@@ -7,10 +7,15 @@
 #include <iostream>
 
 
-
-namespace OGraphics {
 using namespace std;
 
+namespace OGraphics {
+
+
+/*
+    OColor: See article 'Color Models: RGB, HSV, HSL'
+            in https://en.wikibooks.org/wiki/Color_Models:_RGB,_HSV,_HSL
+ */
 
 class OColor {
 
@@ -19,15 +24,21 @@ public:
     OColor(unsigned char red, unsigned char green, unsigned char blue);
     explicit OColor(const std::string& format);
 
-    inline unsigned long value() const { return m_value; }
-    inline int red() const   { return m_rgb_array[2]; }
-    inline int green() const { return m_rgb_array[1]; }
-    inline int blue() const  { return m_rgb_array[0]; }
+    unsigned long value() const;
+    inline int red() const   { return m_red; }
+    inline int green() const { return m_green; }
+    inline int blue() const  { return m_blue; }
+    std::string to_string() const;
     OColor complementary() const;
+    OColor darker(float shade_factor) const;
+    OColor brighter(float tint_factor) const;
 
 private:
-    unsigned long m_value = 0;
-    unsigned char* m_rgb_array = reinterpret_cast<unsigned char*>(&m_value);  // array index: red=2, green=1, blue=0
+    unsigned char m_red   = 0;
+    unsigned char m_green = 0;
+    unsigned char m_blue  = 0;
+//    unsigned long m_value = 0;
+//    unsigned char* m_rgb_array = reinterpret_cast<unsigned char*>(&m_value);  // array index: red=2, green=1, blue=0
 };
 
 ostream& operator<<(ostream & os, const OColor& color);
