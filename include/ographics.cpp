@@ -3,6 +3,7 @@
 #include <cmath>
 #include <sstream>
 #include <iomanip>
+#include <vector>
 
 using namespace std;
 using namespace OGraphics;
@@ -119,6 +120,14 @@ OColor OColor::brighter(float tint_factor) const
     return OColor(brighten(m_red), brighten(m_green), brighten(m_blue));
 }
 
+vector<float> get_factors__(int nsteps) {
+    vector<float> vec;
+    vec.reserve(nsteps);
+    float step_amount = 1.0 / (nsteps + 1);
+    for (int step = 1; step <= nsteps; ++step)
+        vec.push_back(step_amount * step);
+    return vec;
+}
 
 
 
@@ -130,11 +139,19 @@ ostream& OGraphics::operator<<(ostream & os, const OColor& color)
 
 void OGraphics::print_color_info(const OColor& color, std::ostream& os)
 {
-    os << "        Color: " << color << endl;
+    os << "Primary Color: " << color.to_string() << "\n  Darker:";
+    vector<float> factors = get_factors__(6);
+    for (float factor : factors)
+        os << " " << color.darker(factor).to_string();
+    os << "\nBrighter:";
+    for (float factor : factors)
+        os << " " << color.brighter(factor).to_string();
     OGraphics::OColor complementary = color.complementary();
-    os << "Complementary: " << complementary << endl;
-    OGraphics::OColor darker = color.darker(0.3);
-    os << "       Darker: " << darker << endl;
-    OGraphics::OColor brighter = color.brighter(0.3);
-    os << "     Brighter: " << brighter << endl;
+    os << "\nComplementary Color: " << complementary.to_string() << "\n  Darker:";
+    for (float factor : factors)
+        os << " " << color.darker(factor).to_string();
+    os << "\nBrighter:";
+    for (float factor : factors)
+        os << " " << color.brighter(factor).to_string();
+    os.put('\n');
 }
