@@ -33,7 +33,7 @@ bool isPrimary(const unsigned long value)
     for (unsigned long i = 2; i <= max; ++i) {
         if (value % i == 0)
             return false;
-        max = value / (i + 1);
+        max = value / (i + 1);  // cut decimals
     }
     return true;
 }
