@@ -20,6 +20,11 @@ bool istGerade(long i);
 long negate(long l); /* l * -1 binär */
 
 
+/* Is value a prime number? */
+bool isPrimary(const unsigned long value);
+
+
+
 class IntGenerator {
 //
 public:

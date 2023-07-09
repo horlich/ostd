@@ -26,6 +26,7 @@ set(PROJECT_SOURCES
 project(ostd VERSION 0.1 LANGUAGES C CXX)
 
 set(CMAKE_INCLUDE_CURRENT_DIR ON)
+set(CMAKE_BUILD_TYPE Release)
 
 set(CMAKE_CXX_STANDARD 20)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
@@ -33,9 +34,10 @@ add_compile_options(-Wall)
 
 add_library(ostd STATIC ${PROJECT_SOURCES})
 
-target_include_directories(${PROJECT_NAME} PRIVATE /home/herbert/swprojekte/lib/ostd/include)
+target_include_directories(${PROJECT_NAME} PRIVATE include)
 
 #target_link_libraries(${PROJECT_NAME} PRIVATE -L/home/herbert/ablage/programme/lib)
 #target_link_libraries(${PROJECT_NAME} PRIVATE libostd.a)
 
-install(TARGETS ostd DESTINATION /home/herbert/ablage/programme/lib)
+#install(TARGETS ostd DESTINATION /home/herbert/ablage/programme/lib)
+install(TARGETS ostd DESTINATION $ENV{HOME}/ablage/programme/lib)

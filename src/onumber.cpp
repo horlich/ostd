@@ -27,6 +27,18 @@ long negate(long l)
 }
 
 
+bool isPrimary(const unsigned long value)
+{
+    unsigned long max = value / 2;  // cut decimals
+    for (unsigned long i = 2; i <= max; ++i) {
+        if (value % i == 0)
+            return false;
+        max = value / (i + 1);
+    }
+    return true;
+}
+
+
 IntGenerator::IntGenerator(int low, int high) : dist(low, high)
 {
     random_device rd;
