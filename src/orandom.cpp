@@ -19,13 +19,13 @@ inline std::string toLower(const std::string &str)
 
 inline char select_char(char from, char to, unsigned char salt)
 {
-    unsigned count_chars = to - from + 1;
+    const unsigned count_chars = to - from + 1;
     return from + (salt % count_chars);
 }
 
 bool GetRandom::refill_buffer()
 {
-    ssize_t read = getrandom(rd_buf, buf_size, 0);
+    const ssize_t read = getrandom(rd_buf, buf_size, 0);
     current_index = 0;
     if (read < 0)
     { // an error occurred
@@ -53,14 +53,14 @@ unsigned char GetRandom::get()
 
 void GetRandom::shuffle(std::string &string_ref, unsigned shuffle_times)
 {
-    unsigned strsize = string_ref.size();
+    const unsigned strsize = string_ref.size();
     while (shuffle_times-- > 0)
     {
         for (unsigned i = 0; i < strsize; ++i)
         {
-            unsigned char salt = get();
-            unsigned j = salt % strsize;
-            char tmp = string_ref.at(i);
+            const unsigned char salt = get();
+            const unsigned j = salt % strsize;
+            const char tmp = string_ref.at(i);
             string_ref.at(i) = string_ref.at(j);
             string_ref.at(j) = tmp;
         }
@@ -71,32 +71,63 @@ unsigned GetRandom::generate_int(int min_value, int max_value)
 {
     min_value = std::abs(min_value);
     max_value = std::abs(max_value);
-    if (min_value == max_value) {
+    if (min_value == max_value)
+    {
         return max_value;
-    } else if (max_value < min_value) {
+    }
+    else if (max_value < min_value)
+    {
         int tmp = min_value;
         min_value = max_value;
         max_value = tmp;
     }
-    unsigned pool_size = max_value - min_value + 1;
+    const unsigned pool_size = max_value - min_value + 1;
+    const unsigned threshold = pool_size * 5;
     unsigned salt = get();
-    unsigned add = (salt + max_value) % pool_size;
+    while (salt < threshold)
+    {
+        salt = salt * get() + 1; // enable prime numbers
+    }
+    const unsigned add = salt % pool_size;
     return min_value + add;
 }
 
+void PasswordGenerator::set_valid_specials(const std::string &&str)
+{
+    m_valid_specials.clear();
+    for (char c : str)
+    {
+        if (std::ispunct(c))
+            m_valid_specials.push_back(c);
+    }
+}
 
 std::string PasswordGenerator::get_password()
 {
     std::string pw;
-    bool all_specials_valid = ((toLower(valid_specials) == "all") || (min_spec > valid_specials.size()));
-    unsigned lc_left = min_lc;
-    unsigned uc_left = min_uc;
-    unsigned dig_left = min_dig;
-    unsigned spec_left = min_spec;
-    char selected_char;
-    while (pw.length() < length)
+    const bool all_specials_valid = ((toLower(m_valid_specials) == "all") || (m_min_spec && m_valid_specials.empty()));
+    unsigned lc_left = m_min_lc;
+    unsigned uc_left = m_min_uc;
+    unsigned dig_left = m_min_dig;
+    unsigned spec_left = m_min_spec;
+    static auto trim_number = [this](unsigned &number) { // test if static makes sense here!
+        unsigned max = m_length / 4;
+        if (number > max)
+            number = max;
+    };
+    // check if sum of minimum numbers exceeds password length:
+    if ((lc_left + uc_left + dig_left + spec_left) > m_length)
     {
-        unsigned char salt = get_random.get();
+        trim_number(uc_left);
+        trim_number(dig_left);
+        trim_number(spec_left);
+        lc_left = m_length - uc_left - dig_left - spec_left;
+    }
+    // start creating password:
+    char selected_char;
+    while (pw.length() < m_length)
+    {
+        const unsigned char salt = m_get_random.get();
         if (lc_left > 0)
         {
             selected_char = select_char('a', 'z', salt);
@@ -127,7 +158,7 @@ std::string PasswordGenerator::get_password()
             }
             else
             {
-                selected_char = valid_specials.at(salt % valid_specials.size());
+                selected_char = m_valid_specials.at(salt %  m_valid_specials.size());
             }
             --spec_left;
         }
@@ -143,10 +174,10 @@ std::string PasswordGenerator::get_password()
             }
             else
             {
-                size_t pos = valid_specials.find(salt);
+                size_t pos = m_valid_specials.find(salt);
                 if (pos != std::string::npos)
                 {
-                    selected_char = valid_specials.at(pos);
+                    selected_char = m_valid_specials.at(pos);
                 }
                 else
                 {
@@ -160,7 +191,6 @@ std::string PasswordGenerator::get_password()
         }
         pw.push_back(selected_char);
     }
-    get_random.shuffle(pw, 20);
+    m_get_random.shuffle(pw, 20);
     return pw;
 }
-

@@ -25,14 +25,21 @@ private:
 class PasswordGenerator
 {
 public:
+    void set_valid_specials(const std::string&&);
+    inline void set_password_length(unsigned len) { m_length = len; } 
+    inline void set_min_lc(unsigned val) { m_min_lc = val; }
+    inline void set_min_uc(unsigned val) { m_min_uc = val; }
+    inline void set_min_dig(unsigned val) { m_min_dig = val; }
+    inline void set_min_spec(unsigned val) { m_min_spec = val; }
+
     std::string get_password();
 
 private:
-    unsigned length     {12};
-    unsigned min_lc     {1};
-    unsigned min_uc     {1};
-    unsigned min_dig    {1};
-    unsigned min_spec   {1};
-    std::string valid_specials;
-    GetRandom get_random;
+    unsigned m_length   {12};
+    unsigned m_min_lc     {1};
+    unsigned m_min_uc     {1};
+    unsigned m_min_dig    {1};
+    unsigned m_min_spec   {1};
+    std::string m_valid_specials;
+    GetRandom m_get_random;
 };
