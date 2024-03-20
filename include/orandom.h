@@ -3,6 +3,10 @@
 
 
 
+namespace Random {
+
+
+
 class GetRandom
 {
 public:
@@ -43,3 +47,6 @@ private:
     std::string m_valid_specials;
     GetRandom m_get_random;
 };
+
+
+} // namespace Random

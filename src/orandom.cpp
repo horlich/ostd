@@ -9,6 +9,8 @@
 #include <iomanip>
 #include <cmath>
 
+using namespace Random;
+
 inline std::string toLower(const std::string &str)
 {
     std::string newstr;
