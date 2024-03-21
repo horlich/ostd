@@ -1,4 +1,3 @@
-// #include "../include/orandom.h"
 #include "orandom.h"
 #include <iostream>
 #include <thread>
@@ -8,6 +7,8 @@
 #include <algorithm>
 #include <iomanip>
 #include <cmath>
+
+using namespace std;
 
 using namespace Random;
 
@@ -94,104 +95,94 @@ unsigned GetRandom::generate_int(int min_value, int max_value)
     return min_value + add;
 }
 
-void PasswordGenerator::set_valid_specials(const std::string &&str)
+const std::string CharPool::excluded_specials{"\"`'.,^"};
+
+bool CharPool::contains(const std::string &str, char c)
 {
-    m_valid_specials.clear();
-    for (char c : str)
+    return str.find(c) != std::string::npos;
+}
+
+char CharPool::get_from_pool(const CharVec &vec)
+{
+    if (m_is_dirty)
+        populatePools();
+    if (vec.empty())
+        return '?'; // should not happen
+    unsigned index = m_get_random.generate_int(0, vec.size() - 1);
+    return vec.at(index);
+}
+
+void CharPool::exclude_chars(const string & excl)
+{
+    m_excluded_chars = excl;
+    m_is_dirty = true;
+}
+
+void CharPool::populatePools()
+{
+    static auto mypopulate = [this](CharVec &vec, char from, char to)
     {
-        if (std::ispunct(c))
-            m_valid_specials.push_back(c);
+        vec.clear();
+        for (char c = from; c <= to; ++c)
+        {
+            if (!contains(m_excluded_chars, c))
+            {
+                vec.push_back(c);
+                m_all.push_back(c);
+            }
+        }
+    };
+    m_all.clear();
+    mypopulate(m_lowercase, 'a', 'z');
+    mypopulate(m_uppercase, 'A', 'Z');
+    mypopulate(m_digits, '0', '9');
+    m_specials.clear();
+    for (char c = '!'; c <= '~'; ++c)
+    {
+        if (std::ispunct(c) && !contains(m_excluded_chars, c) && !contains(excluded_specials, c))
+        {
+            m_specials.push_back(c);
+            m_all.push_back(c);
+        }
     }
+    m_is_dirty = false;
 }
 
 std::string PasswordGenerator::get_password()
 {
     std::string pw;
-    const bool all_specials_valid = ((toLower(m_valid_specials) == "all") || (m_min_spec && m_valid_specials.empty()));
-    unsigned lc_left = m_min_lc;
-    unsigned uc_left = m_min_uc;
-    unsigned dig_left = m_min_dig;
-    unsigned spec_left = m_min_spec;
+    unsigned my_lc = m_min_lc;
+    unsigned my_uc = m_min_uc;
+    unsigned my_dig = m_min_dig;
+    unsigned my_spec = m_min_spec;
     static auto trim_number = [this](unsigned &number) { // test if static makes sense here!
         unsigned max = m_length / 4;
         if (number > max)
             number = max;
     };
     // check if sum of minimum numbers exceeds password length:
-    if ((lc_left + uc_left + dig_left + spec_left) > m_length)
+    if ((my_lc + my_uc + my_dig + my_spec) > m_length)
     {
-        trim_number(uc_left);
-        trim_number(dig_left);
-        trim_number(spec_left);
-        lc_left = m_length - uc_left - dig_left - spec_left;
+        trim_number(my_uc);
+        trim_number(my_dig);
+        trim_number(my_spec);
+        my_lc = m_length - my_uc - my_dig - my_spec;
     }
     // start creating password:
-    char selected_char;
-    while (pw.length() < m_length)
-    {
-        const unsigned char salt = m_get_random.get();
-        if (lc_left > 0)
-        {
-            selected_char = select_char('a', 'z', salt);
-            --lc_left;
-        }
-        else if (uc_left > 0)
-        {
-            selected_char = select_char('A', 'Z', salt);
-            --uc_left;
-        }
-        else if (dig_left > 0)
-        {
-            selected_char = select_char('0', '9', salt);
-            --dig_left;
-        }
-        else if (spec_left > 0)
-        {
-            if (all_specials_valid)
-            {
-                if (std::ispunct(salt))
-                {
-                    selected_char = salt;
-                }
-                else
-                {
-                    continue;
-                }
-            }
-            else
-            {
-                selected_char = m_valid_specials.at(salt %  m_valid_specials.size());
-            }
-            --spec_left;
-        }
-        else if (std::isalnum(salt))
-        {
-            selected_char = salt;
-        }
-        else if (std::ispunct(salt))
-        {
-            if (all_specials_valid)
-            {
-                selected_char = salt;
-            }
-            else
-            {
-                size_t pos = m_valid_specials.find(salt);
-                if (pos != std::string::npos)
-                {
-                    selected_char = m_valid_specials.at(pos);
-                }
-                else
-                {
-                    continue; // unsupported special character
-                }
-            }
-        }
-        else
-        {
-            continue; // needless byte
-        }
-        pw.push_back(selected_char);
+    for (unsigned i = 0; i < my_lc; ++i) {
+        pw.push_back(m_charpool.get_from_lc());
+    }
+    for (unsigned i = 0; i < my_uc; ++i) {
+        pw.push_back(m_charpool.get_from_uc());
+    }
+    for (unsigned i = 0; i < my_dig; ++i) {
+        pw.push_back(m_charpool.get_from_digits());
+    }
+    for (unsigned i = 0; i < my_spec; ++i) {
+        pw.push_back(m_charpool.get_from_specials());
+    }
+    while (pw.size() < m_length) {
+        pw.push_back(m_charpool.get_from_all());
     }
     m_get_random.shuffle(pw, 20);
     return pw;
