@@ -112,7 +112,7 @@ char CharPool::get_from_pool(const CharVec &vec)
     return vec.at(index);
 }
 
-void CharPool::exclude_chars(const string & excl)
+void CharPool::exclude_chars(const string &excl)
 {
     m_excluded_chars = excl;
     m_is_dirty = true;
@@ -169,19 +169,24 @@ std::string PasswordGenerator::get_password()
         my_lc = m_length - my_uc - my_dig - my_spec;
     }
     // start creating password:
-    for (unsigned i = 0; i < my_lc; ++i) {
+    for (unsigned i = 0; i < my_lc; ++i)
+    {
         pw.push_back(m_charpool.get_from_lc());
     }
-    for (unsigned i = 0; i < my_uc; ++i) {
+    for (unsigned i = 0; i < my_uc; ++i)
+    {
         pw.push_back(m_charpool.get_from_uc());
     }
-    for (unsigned i = 0; i < my_dig; ++i) {
+    for (unsigned i = 0; i < my_dig; ++i)
+    {
         pw.push_back(m_charpool.get_from_digits());
     }
-    for (unsigned i = 0; i < my_spec; ++i) {
+    for (unsigned i = 0; i < my_spec; ++i)
+    {
         pw.push_back(m_charpool.get_from_specials());
     }
-    while (pw.size() < m_length) {
+    while (pw.size() < m_length)
+    {
         pw.push_back(m_charpool.get_from_all());
     }
     m_get_random.shuffle(pw, 20);
