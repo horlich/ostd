@@ -1,6 +1,7 @@
 #include <sys/random.h>
 #include <string>
 #include <vector>
+#include <limits>
 
 namespace Random
 {

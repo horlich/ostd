@@ -72,8 +72,6 @@ void GetRandom::shuffle(std::string &string_ref, unsigned shuffle_times)
 
 unsigned GetRandom::generate_int(int min_value, int max_value)
 {
-    min_value = std::abs(min_value);
-    max_value = std::abs(max_value);
     if (min_value == max_value)
     {
         return max_value;
@@ -85,8 +83,8 @@ unsigned GetRandom::generate_int(int min_value, int max_value)
         max_value = tmp;
     }
     const unsigned pool_size = max_value - min_value + 1;
-    const unsigned threshold = pool_size * 5;
-    unsigned salt = get();
+    const unsigned long long threshold = pool_size * 5;
+    unsigned long long salt = get(); // salt will grow and exceed threshold
     while (salt < threshold)
     {
         salt = salt * get() + 1; // enable prime numbers
